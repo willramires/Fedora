@@ -1,0 +1,95 @@
+---
+- name: Criar diretório de wallpapers
+  ansible.builtin.file:
+    path: /usr/share/backgrounds/willramires
+    state: directory
+    mode: '0755'
+
+- name: Instalar wallpaper
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/files/wallpaper.png"
+    dest: /usr/share/backgrounds/willramires/wallpaper.png
+    mode: '0644'
+
+- name: Configurações GNOME
+  become: false
+  ansible.builtin.command:
+    cmd: dconf load /
+    stdin: |
+      [org/gnome/desktop/background]
+      color-shading-type='solid'
+      picture-options='zoom'
+      picture-uri='file:///usr/share/backgrounds/willramires/wallpaper.png'
+      picture-uri-dark='file:///usr/share/backgrounds/willramires/wallpaper.png'
+
+      [org/gnome/desktop/interface]
+      accent-color='purple'
+      clock-show-weekday=true
+      color-scheme='prefer-dark'
+      enable-hot-corners=false
+      icon-theme='Adwaita'
+
+      [org/gnome/desktop/peripherals/mouse]
+      accel-profile='flat'
+
+      [org/gnome/desktop/privacy]
+      report-technical-problems=true
+
+      [org/gnome/desktop/screensaver]
+      lock-enabled=true
+      picture-options='zoom'
+      picture-uri='file:///usr/share/backgrounds/willramires/wallpaper.png'
+
+      [org/gnome/desktop/wm/keybindings]
+      switch-applications=@as []
+      switch-applications-backward=@as []
+      switch-windows=['<Alt>Tab']
+      switch-windows-backward=['<Shift><Alt>Tab']
+
+      [org/gnome/desktop/wm/preferences]
+      num-workspaces=1
+
+      [org/gnome/mutter]
+      dynamic-workspaces=false
+
+      [org/gnome/settings-daemon/plugins/housekeeping]
+      donation-reminder-enabled=false
+
+      [org/gnome/settings-daemon/plugins/color]
+      night-light-enabled=true
+      night-light-schedule-automatic=false
+      night-light-schedule-from=17.5
+      night-light-schedule-to=5.0
+      night-light-temperature=uint32 1000
+
+      [org/gnome/settings-daemon/plugins/power]
+      sleep-inactive-ac-timeout=0
+      sleep-inactive-ac-type='nothing'
+      sleep-inactive-battery-timeout=0
+      sleep-inactive-battery-type='nothing'
+
+      [org/gnome/shell]
+      always-show-log-out=true
+      favorite-apps=['org.gnome.Nautilus.desktop', 'net.nokyan.Resources.desktop', 'org.gnome.Ptyxis.desktop', 'app.zen_browser.zen.desktop', 'com.spotify.Client.desktop', 'com.vscodium.codium.desktop', 'com.obsproject.Studio.desktop', 'org.prismlauncher.PrismLauncher.desktop']
+
+      [org/gnome/nautilus/preferences]
+      default-folder-viewer='list-view'
+      default-sort-order='mtime'
+      default-sort-in-reverse-order=true
+      date-time-format='detailed'
+      show-hidden-files=true
+
+      [org/gnome/nautilus/list-view]
+      default-zoom-level='standard'
+      default-visible-columns=['name', 'size', 'date_modified']
+      default-column-order=['name', 'size', 'date_modified', 'type', 'date_modified_with_time', 'date_created', 'date_accessed', 'owner', 'group', 'permissions', 'mime_type', 'where', 'recency', 'starred']
+
+      [org/gtk/settings/file-chooser]
+      show-hidden=true
+
+      [org/gtk/gtk4/settings/file-chooser]
+      show-hidden=true
+
+      [net/nokyan/Resources]
+      sidebar-details=true
+      sidebar-meter-type='ProgressBar'
