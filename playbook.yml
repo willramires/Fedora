@@ -19,3 +19,6 @@
 
     - name: Extensões GNOME
       ansible.builtin.import_tasks: tasks/040-extensões-gnome.yml
+   
+    - name: OBS Studio
+      ansible.builtin.import_tasks: tasks/050-obs.yml
