@@ -1,0 +1,55 @@
+---
+- name: Instalar pipx
+  ansible.builtin.dnf:
+    name: pipx
+    state: present
+
+- name: Instalar gnome-extensions-cli
+  become: true
+  become_user: willramires
+  ansible.builtin.command:
+    cmd: pipx install gnome-extensions-cli --system-site-packages
+    creates: /home/willramires/.local/bin/gext
+
+- name: Instalar extensões GNOME
+  become: true
+  become_user: willramires
+  ansible.builtin.command:
+    cmd: >
+      /home/willramires/.local/bin/gext --filesystem install
+      just-perfection-desktop@just-perfection
+      user-accent-colors@fabito02
+      sound-percentage@subashghimire.info.np
+      gradia-integration@alexandervanhee.github.io
+
+- name: Configurar defaults do GNOME
+  ansible.builtin.copy:
+    dest: /etc/dconf/db/local.d/00-willramires
+    mode: '0644'
+    content: |
+      [org/gnome/shell]
+      always-show-log-out=true
+      favorite-apps=['org.gnome.Nautilus.desktop', 'net.nokyan.Resources.desktop', 'org.gnome.Ptyxis.desktop', 'app.zen_browser.zen.desktop', 'com.spotify.Client.desktop', 'com.vscodium.codium.desktop', 'com.obsproject.Studio.desktop', 'org.prismlauncher.PrismLauncher.desktop']
+      disable-user-extensions=false
+      enabled-extensions=['just-perfection-desktop@just-perfection', 'user-accent-colors@fabito02', 'sound-percentage@subashghimire.info.np', 'gradia-integration@alexandervanhee.github.io']
+
+      [org/gnome/shell/extensions/chromaleon]
+      accent-color='#3c0c6c'
+      custom-color=true
+      recolor-apps=true
+      recolor-folders=true
+
+      [org/gnome/shell/extensions/just-perfection]
+      activities-button=false
+      dash-separator=false
+      panel=false
+      panel-in-overview=true
+      quick-settings-airplane-mode=false
+      quick-settings-backlight=false
+      quick-settings-dark-mode=false
+      quick-settings-do-not-disturb=false
+      search=false
+      show-apps-button=false
+      support-notifier-type=0
+      type-to-search=false
+      window-preview-caption=false
