@@ -1,7 +1,7 @@
 ---
 - name: Carregar configuração privada do Spotify
   ansible.builtin.include_vars:
-    file: "{{ playbook_dir }}/vars/spotify.vault.yml"
+    file: "{{ playbook_dir }}/files/spotify.vault.yml"
 
 - name: Configurar Spotify
   vars:
