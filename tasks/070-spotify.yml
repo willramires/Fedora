@@ -1,14 +1,16 @@
 ---
+- name: Carregar configuração privada do Spotify
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/vars/spotify.vault.yml"
+
 - name: Configurar Spotify
   vars:
     spotify_user: willramires
     spotify_group: willramires
     spotify_home: /home/willramires
 
-    spotify_account: 315cgvok6a624lt4eelwnv6cojry-user
-
     spotify_config: "{{ spotify_home }}/.var/app/com.spotify.Client/config/spotify"
-    spotify_user_dir: "{{ spotify_config }}/Users/{{ spotify_account }}"
+    spotify_user_dir: "{{ spotify_config }}/Users/{{ spotify_account }}-user"
     spotify_prefs: "{{ spotify_user_dir }}/prefs"
 
   block:
