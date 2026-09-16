@@ -1,0 +1,22 @@
+---
+- name: Configurar VSCodium
+  vars:
+    vscodium_config_root: "/home/willramires/.var/app/com.vscodium.codium/config"
+
+  block:
+    - name: Garantir diretorio de configuracao do VSCodium
+      ansible.builtin.file:
+        path: "{{ vscodium_config_root }}"
+        state: directory
+        owner: willramires
+        group: willramires
+        mode: "0700"
+
+    - name: Marcar README inicial do wrapper Flatpak como concluido
+      ansible.builtin.copy:
+        dest: "{{ vscodium_config_root }}/flatpak-vscodium-first-run"
+        owner: willramires
+        group: willramires
+        mode: "0600"
+        content: ""
+        force: false
