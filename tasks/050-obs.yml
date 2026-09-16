@@ -8,13 +8,10 @@
       set -e
 
       OBS_DIR="/home/willramires/.var/app/com.obsproject.Studio/config/obs-studio"
-      PROFILE_DIR="$OBS_DIR/basic/profiles/Geral"
+      PROFILE_DIR="$OBS_DIR/basic/profiles/Untitled"
 
       mkdir -p "$PROFILE_DIR"
       mkdir -p /home/willramires/Videos
-
-      # Remove o perfil padrão criado pelo OBS
-      rm -rf "$OBS_DIR/basic/profiles/Untitled"
 
       cat > "$OBS_DIR/global.ini" <<'EOF'
       [General]
@@ -31,10 +28,12 @@
       [PropertiesWindow]
       cx=720
       cy=580
+      EOF
 
+      cat > "$OBS_DIR/user.ini" <<'EOF'
       [Basic]
       Profile=Geral
-      ProfileDir=Geral
+      ProfileDir=Untitled
       EOF
 
       cat > "$PROFILE_DIR/basic.ini" <<'EOF'
