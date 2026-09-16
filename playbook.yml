@@ -34,3 +34,12 @@
 
     - name: Serviços
       ansible.builtin.import_tasks: tasks/090-serviços.yml
+    
+    - name: Brilho
+      ansible.builtin.import_tasks: tasks/100-brilho.yml
+    
+    - name: Monitor
+      ansible.builtin.import_tasks: tasks/110-monitor.yml
+
+    - name: Zen
+      ansible.builtin.import_tasks: tasks/120-zen.yml
