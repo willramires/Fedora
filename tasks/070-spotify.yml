@@ -2,11 +2,10 @@
 - name: Configurar Spotify
   vars:
     spotify_user: willramires
-    spotify_home: "/home/willramires"
-    spotify_config_root: "/home/willramires/.var/app/com.spotify.Client/config"
-    spotify_bin_root: "/home/willramires/.local/bin"
-    spotify_applications_root: "/home/willramires/.local/share/applications"
-    spotify_flatpak_override_root: "/home/willramires/.local/share/flatpak/overrides"
+    spotify_home: /home/willramires
+    spotify_config_root: "{{ spotify_home }}/.var/app/com.spotify.Client/config"
+    spotify_applications_root: "{{ spotify_home }}/.local/share/applications"
+    spotify_flatpak_override_root: "{{ spotify_home }}/.local/share/flatpak/overrides"
 
   block:
     - name: Garantir diretorios do Spotify
@@ -18,7 +17,6 @@
         mode: "0755"
       loop:
         - "{{ spotify_config_root }}"
-        - "{{ spotify_bin_root }}"
         - "{{ spotify_applications_root }}"
         - "{{ spotify_flatpak_override_root }}"
 
@@ -41,7 +39,12 @@
           [Context]
           sockets=x11;
 
-    - name: Instalar entrada desktop do Spotify
+    - name: Garantir ferramenta de atualizacao dos atalhos
+      ansible.builtin.dnf:
+        name: desktop-file-utils
+        state: present
+
+    - name: Corrigir entrada desktop do Spotify
       ansible.builtin.copy:
         dest: "{{ spotify_applications_root }}/com.spotify.Client.desktop"
         owner: "{{ spotify_user }}"
@@ -51,7 +54,7 @@
           [Desktop Entry]
           Name=Spotify
           Comment=Spotify
-          Exec=/home/willramires/.local/bin/spotify-maximized %U
+          Exec=/usr/bin/flatpak run com.spotify.Client %U
           Icon=com.spotify.Client
           Terminal=false
           Type=Application
@@ -63,7 +66,9 @@
 
     - name: Atualizar banco de dados desktop
       ansible.builtin.command:
-        cmd: update-desktop-database "{{ spotify_applications_root }}"
+        argv:
+          - update-desktop-database
+          - "{{ spotify_applications_root }}"
       become_user: "{{ spotify_user }}"
       environment:
         HOME: "{{ spotify_home }}"
