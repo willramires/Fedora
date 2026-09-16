@@ -1,0 +1,149 @@
+---
+- name: Configurar Zen Browser
+  become: true
+  become_user: willramires
+  vars:
+    zen_root: /home/willramires/.var/app/app.zen_browser.zen/.zen
+    zen_profile_name: qk2beiy3.ansible-template
+    zen_profile: "{{ zen_root }}/{{ zen_profile_name }}"
+    zen_install_hash: "2953CB39A2589173"
+    zen_extensions:
+      - filename: "78272b6fa58f4a1abaac99321d503a20@proton.me.xpi"
+        url: "https://addons.mozilla.org/firefox/downloads/latest/proton-pass/latest.xpi"
+      - filename: "harper@writewithharper.com.xpi"
+        url: "https://addons.mozilla.org/firefox/downloads/latest/private-grammar-checker-harper/latest.xpi"
+      - filename: "pt-BR@dictionaries.addons.mozilla.org.xpi"
+        url: "https://addons.mozilla.org/firefox/downloads/latest/corretor/latest.xpi"
+      - filename: "uBlock0@raymondhill.net.xpi"
+        url: "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
+      - filename: "{74145f27-f039-47ce-a470-a662b129930a}.xpi"
+        url: "https://addons.mozilla.org/firefox/downloads/latest/clearurls/latest.xpi"
+
+  block:
+    - name: Garantir diretório de perfis do Zen
+      ansible.builtin.file:
+        path: "{{ zen_root }}"
+        state: directory
+        owner: "{{ zen_user }}"
+        group: "{{ zen_group }}"
+        mode: "0700"
+
+    - name: Instalar template do perfil do Zen
+      ansible.builtin.unarchive:
+        src: "{{ playbook_dir }}/files/zen-profile-template.tar.gz"
+        dest: "{{ zen_root }}"
+        owner: "{{ zen_user }}"
+        group: "{{ zen_group }}"
+
+    - name: Atualizar marcadores da versão instalada do Zen
+      ansible.builtin.command:
+        argv:
+          - /usr/bin/python3
+          - -c
+          - |
+            import configparser
+            import json
+            import pathlib
+            import re
+            import subprocess
+            import sys
+
+            profile = pathlib.Path(sys.argv[1])
+            location = subprocess.check_output(
+                ["flatpak", "info", "--system", "--show-location", "app.zen_browser.zen"],
+                text=True,
+            ).strip()
+            application = pathlib.Path(location) / "files/zen/application.ini"
+            if not application.exists():
+                matches = list((pathlib.Path(location) / "files").rglob("application.ini"))
+                if not matches:
+                    raise RuntimeError("application.ini do Zen não encontrado")
+                application = matches[0]
+
+            config = configparser.ConfigParser(interpolation=None)
+            with application.open() as stream:
+                config.read_file(stream)
+            platform = configparser.ConfigParser(interpolation=None)
+            with application.with_name("platform.ini").open() as stream:
+                platform.read_file(stream)
+
+            markers = {
+                "zen.updates.last-version": config["App"]["Version"],
+                "zen.updates.last-build-id": config["App"]["BuildID"],
+                "browser.startup.homepage_override.mstone": platform["Build"]["Milestone"],
+                "browser.startup.homepage_override.buildID": platform["Build"]["BuildID"],
+            }
+            if not all(markers.values()):
+                raise RuntimeError("Versão ou BuildID do Zen ausente")
+
+            prefs = profile / "prefs.js"
+            text = prefs.read_text()
+            for key, value in markers.items():
+                pattern = r'^user_pref\("' + re.escape(key) + r'",.*\);\r?\n?'
+                text = re.sub(pattern, "", text, flags=re.MULTILINE)
+                text = text.rstrip("\n") + "\n"
+                text += f'user_pref({json.dumps(key)}, {json.dumps(value)});\n'
+            prefs.write_text(text)
+          - "{{ zen_profile }}"
+      changed_when: false
+
+    - name: Garantir preferências declarativas do perfil do Zen
+      ansible.builtin.blockinfile:
+        path: "{{ zen_profile }}/user.js"
+        marker: "// {mark} ANSIBLE MANAGED ZEN"
+        block: |
+          user_pref("zen.updates.show-update-notification", false);
+          user_pref("extensions.autoDisableScopes", 0);
+          user_pref("extensions.enabledScopes", 5);
+
+    - name: Garantir diretório de extensões do Zen
+      ansible.builtin.file:
+        path: "{{ zen_profile }}/extensions"
+        state: directory
+        owner: "{{ zen_user }}"
+        group: "{{ zen_group }}"
+        mode: "0700"
+
+    - name: Instalar extensões ausentes do Zen
+      ansible.builtin.get_url:
+        url: "{{ item.url }}"
+        dest: "{{ zen_profile }}/extensions/{{ item.filename }}"
+        owner: "{{ zen_user }}"
+        group: "{{ zen_group }}"
+        mode: "0644"
+        force: false
+      loop: "{{ zen_extensions }}"
+      loop_control:
+        label: "{{ item.filename }}"
+
+    - name: Registrar template como perfil padrão do Zen
+      ansible.builtin.copy:
+        dest: "{{ zen_root }}/profiles.ini"
+        owner: "{{ zen_user }}"
+        group: "{{ zen_group }}"
+        mode: "0600"
+        content: |
+          [General]
+          StartWithLastProfile=1
+          Version=2
+
+          [Profile0]
+          Name=Default (release)
+          IsRelative=1
+          Path={{ zen_profile_name }}
+          Default=1
+
+          [Install{{ zen_install_hash }}]
+          Default={{ zen_profile_name }}
+          Locked=1
+
+    - name: Vincular instalação do Zen ao template
+      ansible.builtin.copy:
+        dest: "{{ zen_root }}/installs.ini"
+        owner: "{{ zen_user }}"
+        group: "{{ zen_group }}"
+        mode: "0600"
+        content: |
+          [{{ zen_install_hash }}]
+          Default={{ zen_profile_name }}
+          Locked=1
