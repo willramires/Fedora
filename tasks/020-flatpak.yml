@@ -3,9 +3,7 @@
   community.general.flatpak_remote:
     name: flathub
     flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
-    method: system
-    state: present
-
+    
 - name: Instalação dos Flatpak
   community.general.flatpak:
     name:
@@ -16,9 +14,6 @@
       - com.obsproject.Studio
       - com.vscodium.codium
       - com.spotify.Client
-    remote: flathub
-    method: system
-    state: present
 
 - name: Atualizar Flatpaks
   ansible.builtin.command: flatpak update --system -y
