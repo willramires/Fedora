@@ -1,0 +1,18 @@
+    - name: Instalar script de brilho do monitor
+      ansible.builtin.copy:
+        dest: /usr/local/bin/fedora-config-set-monitor-brightness
+        mode: "0755"
+        content: |
+          #!/usr/bin/bash
+          hora=$(date +%H%M)
+          brilho=50
+
+          if (( 10#$hora >= 1730 || 10#$hora < 500 )); then
+            brilho=0
+          fi
+
+          /usr/bin/ddcutil --mfg AOC --model 27G2G4 setvcp 10 "$brilho" ||
+            /usr/bin/logger -t fedora-config-brightness \
+              "Nao foi possivel ajustar o brilho do monitor AOC 27G2G4 para ${brilho}%"
+
+          exit 0
