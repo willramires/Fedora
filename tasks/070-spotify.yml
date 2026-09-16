@@ -1,0 +1,70 @@
+---
+- name: Configurar Spotify
+  vars:
+    spotify_user: willramires
+    spotify_home: "/home/willramires"
+    spotify_config_root: "/home/willramires/.var/app/com.spotify.Client/config"
+    spotify_bin_root: "/home/willramires/.local/bin"
+    spotify_applications_root: "/home/willramires/.local/share/applications"
+    spotify_flatpak_override_root: "/home/willramires/.local/share/flatpak/overrides"
+
+  block:
+    - name: Garantir diretorios do Spotify
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ spotify_user }}"
+        group: "{{ spotify_user }}"
+        mode: "0755"
+      loop:
+        - "{{ spotify_config_root }}"
+        - "{{ spotify_bin_root }}"
+        - "{{ spotify_applications_root }}"
+        - "{{ spotify_flatpak_override_root }}"
+
+    - name: Configurar flags do Spotify
+      ansible.builtin.copy:
+        dest: "{{ spotify_config_root }}/spotify-flags.conf"
+        owner: "{{ spotify_user }}"
+        group: "{{ spotify_user }}"
+        mode: "0600"
+        content: |
+          --ozone-platform=x11
+
+    - name: Configurar override Flatpak do Spotify
+      ansible.builtin.copy:
+        dest: "{{ spotify_flatpak_override_root }}/com.spotify.Client"
+        owner: "{{ spotify_user }}"
+        group: "{{ spotify_user }}"
+        mode: "0644"
+        content: |
+          [Context]
+          sockets=x11;
+
+    - name: Instalar entrada desktop do Spotify
+      ansible.builtin.copy:
+        dest: "{{ spotify_applications_root }}/com.spotify.Client.desktop"
+        owner: "{{ spotify_user }}"
+        group: "{{ spotify_user }}"
+        mode: "0644"
+        content: |
+          [Desktop Entry]
+          Name=Spotify
+          Comment=Spotify
+          Exec=/home/willramires/.local/bin/spotify-maximized %U
+          Icon=com.spotify.Client
+          Terminal=false
+          Type=Application
+          Categories=AudioVideo;Audio;Player;
+          StartupNotify=false
+          StartupWMClass=spotify
+          MimeType=x-scheme-handler/spotify;
+      register: spotify_desktop
+
+    - name: Atualizar banco de dados desktop
+      ansible.builtin.command:
+        cmd: update-desktop-database "{{ spotify_applications_root }}"
+      become_user: "{{ spotify_user }}"
+      environment:
+        HOME: "{{ spotify_home }}"
+      when: spotify_desktop.changed
