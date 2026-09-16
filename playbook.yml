@@ -13,3 +13,6 @@
 
     - name: Flatpak
       ansible.builtin.import_tasks: tasks/020-flatpak.yml
+
+    - name: GNOME
+      ansible.builtin.import_tasks: tasks/030-gnome.yml
