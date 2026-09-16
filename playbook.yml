@@ -25,3 +25,9 @@
 
     - name: Prism
       ansible.builtin.import_tasks: tasks/060-prism.yml
+
+    - name: Spotify
+      ansible.builtin.import_tasks: tasks/070-spotify.yml
+     
+    - name: Vscodium
+      ansible.builtin.import_tasks: tasks/080-vscodium.yml
