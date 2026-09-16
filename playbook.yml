@@ -31,3 +31,6 @@
      
     - name: Vscodium
       ansible.builtin.import_tasks: tasks/080-vscodium.yml
+
+    - name: Serviços
+      ansible.builtin.import_tasks: tasks/090-serviços.yml
