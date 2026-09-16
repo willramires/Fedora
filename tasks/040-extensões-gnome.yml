@@ -26,26 +26,10 @@
   become_user: willramires
   environment:
     HOME: /home/willramires
-  block:
-    - name: Clonar Gradia Capture
-      ansible.builtin.git:
-        repo: https://github.com/AlexanderVanhee/gradia-capture.git
-        dest: /tmp/gradia-capture
-        version: master
-        depth: 1
-        force: true
+  ansible.builtin.shell:
+    cmd: >-
+      git clone --depth=1 https://github.com/AlexanderVanhee/gradia-capture.git /tmp/gradia-capture && cd /tmp/gradia-capture && ./build.sh -i && gnome-extensions enable gradia-integration@alexandervanhee.github.io
 
-    - name: Compilar e instalar Gradia Capture
-      ansible.builtin.command:
-        cmd: ./build.sh -i
-        chdir: /tmp/gradia-capture
-
-  always:
-    - name: Remover fontes temporários do Gradia Capture
-      ansible.builtin.file:
-        path: /tmp/gradia-capture
-        state: absent
-        
 - name: Configurar extensões GNOME
   ansible.builtin.copy:
     dest: /etc/dconf/db/local.d/20-extensions
@@ -53,7 +37,7 @@
     content: |
       [org/gnome/shell]
       disable-user-extensions=false
-      enabled-extensions=['just-perfection-desktop@just-perfection', 'user-accent-colors@fabito02', 'sound-percentage@subashghimire.info.np', 'gradia-integration@alexandervanhee.github.io']
+      enabled-extensions=['just-perfection-desktop@just-perfection', 'user-accent-colors@fabito02', 'sound-percentage@subashghimire.info.np']
 
       [org/gnome/shell/extensions/chromaleon]
       accent-color='#3c0c6c'
