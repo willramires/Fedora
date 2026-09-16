@@ -20,16 +20,46 @@
       just-perfection-desktop@just-perfection
       user-accent-colors@fabito02
       sound-percentage@subashghimire.info.np
-      gradia-integration@alexandervanhee.github.io
 
-- name: Configurar defaults do GNOME
+- name: Baixar Gradia Capture
+  become: true
+  become_user: willramires
+  ansible.builtin.git:
+    repo: https://github.com/AlexanderVanhee/gradia-capture.git
+    dest: /tmp/gradia-capture
+    depth: 1
+    force: true
+
+- name: Compilar Gradia Capture
+  become: true
+  become_user: willramires
+  ansible.builtin.command:
+    cmd: ./build.sh
+    chdir: /tmp/gradia-capture
+    creates: /tmp/gradia-capture/gradia-integration@alexandervanhee.github.io.shell-extension.zip
+
+- name: Criar diretório do Gradia Capture
+  ansible.builtin.file:
+    path: /home/willramires/.local/share/gnome-shell/extensions/gradia-integration@alexandervanhee.github.io
+    state: directory
+    owner: willramires
+    group: willramires
+    mode: '0755'
+
+- name: Instalar Gradia Capture
+  ansible.builtin.unarchive:
+    src: /tmp/gradia-capture/gradia-integration@alexandervanhee.github.io.shell-extension.zip
+    dest: /home/willramires/.local/share/gnome-shell/extensions/gradia-integration@alexandervanhee.github.io
+    remote_src: true
+    owner: willramires
+    group: willramires
+
+- name: Configurar extensões GNOME
   ansible.builtin.copy:
-    dest: /etc/dconf/db/local.d/00-willramires
+    dest: /etc/dconf/db/local.d/20-extensions
     mode: '0644'
     content: |
       [org/gnome/shell]
-      always-show-log-out=true
-      favorite-apps=['org.gnome.Nautilus.desktop', 'net.nokyan.Resources.desktop', 'org.gnome.Ptyxis.desktop', 'app.zen_browser.zen.desktop', 'com.spotify.Client.desktop', 'com.vscodium.codium.desktop', 'com.obsproject.Studio.desktop', 'org.prismlauncher.PrismLauncher.desktop']
       disable-user-extensions=false
       enabled-extensions=['just-perfection-desktop@just-perfection', 'user-accent-colors@fabito02', 'sound-percentage@subashghimire.info.np', 'gradia-integration@alexandervanhee.github.io']
 
@@ -53,3 +83,7 @@
       support-notifier-type=0
       type-to-search=false
       window-preview-caption=false
+
+- name: Atualizar dconf
+  ansible.builtin.command:
+    cmd: dconf update
