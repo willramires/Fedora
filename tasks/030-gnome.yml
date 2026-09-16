@@ -11,11 +11,25 @@
     dest: /usr/share/backgrounds/willramires/wallpaper.png
     mode: '0644'
 
-- name: Configurações GNOME
-  become: false
-  ansible.builtin.command:
-    cmd: dconf load /
-    stdin: |
+- name: Criar perfil dconf
+  ansible.builtin.copy:
+    dest: /etc/dconf/profile/user
+    mode: '0644'
+    content: |
+      user-db:user
+      system-db:local
+
+- name: Criar diretório dconf local
+  ansible.builtin.file:
+    path: /etc/dconf/db/local.d
+    state: directory
+    mode: '0755'
+
+- name: Configurar defaults do GNOME
+  ansible.builtin.copy:
+    dest: /etc/dconf/db/local.d/00-willramires
+    mode: '0644'
+    content: |
       [org/gnome/desktop/background]
       color-shading-type='solid'
       picture-options='zoom'
@@ -90,6 +104,6 @@
       [org/gtk/gtk4/settings/file-chooser]
       show-hidden=true
 
-      [net/nokyan/Resources]
-      sidebar-details=true
-      sidebar-meter-type='ProgressBar'
+- name: Atualizar banco dconf
+  ansible.builtin.command:
+    cmd: dconf update
