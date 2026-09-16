@@ -45,7 +45,7 @@
         group: willramires
         mode: "0600"
         backup: true
-              content: |
+        content: |
           {
             "security.workspace.trust.banner": "never",
             "security.workspace.trust.startupPrompt": "never",
