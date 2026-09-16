@@ -1,1 +1,47 @@
+---
+- name: Configurar Spotify
+  vars:
+    spotify_user: willramires
+    spotify_group: willramires
+    spotify_home: /home/willramires
 
+    spotify_account: 315cgvok6a624lt4eelwnv6cojry-user
+
+    spotify_config: "{{ spotify_home }}/.var/app/com.spotify.Client/config/spotify"
+    spotify_user_dir: "{{ spotify_config }}/Users/{{ spotify_account }}"
+    spotify_prefs: "{{ spotify_user_dir }}/prefs"
+
+  block:
+    - name: Usar decoração de janela do GNOME via XWayland
+      ansible.builtin.command:
+        argv:
+          - flatpak
+          - override
+          - --system
+          - --nosocket=wayland
+          - --socket=x11
+          - com.spotify.Client
+      changed_when: false
+
+    - name: Criar diretório de configuração da conta Spotify
+      ansible.builtin.file:
+        path: "{{ spotify_user_dir }}"
+        state: directory
+        owner: "{{ spotify_user }}"
+        group: "{{ spotify_group }}"
+        mode: "0700"
+
+    - name: Configurar preferências do Spotify antes do primeiro login
+      ansible.builtin.copy:
+        dest: "{{ spotify_prefs }}"
+        owner: "{{ spotify_user }}"
+        group: "{{ spotify_group }}"
+        mode: "0600"
+        content: |
+          audio.play_bitrate_non_metered_migrated=true
+          audio.play_bitrate_non_metered_enumeration=4
+          audio.play_bitrate_enumeration=4
+          audio.sync_bitrate_enumeration=4
+          audio.allow_downgrade=false
+          audio.normalize_v2=false
+          ui.hide_hpto=true
