@@ -22,3 +22,6 @@
    
     - name: OBS Studio
       ansible.builtin.import_tasks: tasks/050-obs.yml
+
+    - name: Prism
+      ansible.builtin.import_tasks: tasks/060-prism.yml
