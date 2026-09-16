@@ -43,3 +43,6 @@
 
     - name: Zen
       ansible.builtin.import_tasks: tasks/120-zen.yml
+
+    - name: Reiniciar
+      ansible.builtin.command: shutdown -r now
