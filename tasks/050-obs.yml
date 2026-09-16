@@ -8,10 +8,13 @@
       set -e
 
       OBS_DIR="/home/willramires/.var/app/com.obsproject.Studio/config/obs-studio"
-      PROFILE_DIR="$OBS_DIR/basic/profiles/Ansible-Geral"
+      PROFILE_DIR="$OBS_DIR/basic/profiles/Geral"
 
       mkdir -p "$PROFILE_DIR"
       mkdir -p /home/willramires/Videos
+
+      # Remove o perfil padrão criado pelo OBS
+      rm -rf "$OBS_DIR/basic/profiles/Untitled"
 
       cat > "$OBS_DIR/global.ini" <<'EOF'
       [General]
@@ -30,13 +33,13 @@
       cy=580
 
       [Basic]
-      Profile=Ansible-Geral
-      ProfileDir=Ansible-Geral
+      Profile=Geral
+      ProfileDir=Geral
       EOF
 
       cat > "$PROFILE_DIR/basic.ini" <<'EOF'
       [General]
-      Name=Ansible-Geral
+      Name=Geral
 
       [Output]
       Mode=Advanced
