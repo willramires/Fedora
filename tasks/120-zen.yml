@@ -1,10 +1,11 @@
 ---
 - name: Configurar Zen Browser
-  become: true
-  become_user: willramires
   vars:
-    zen_root: /home/willramires/.var/app/app.zen_browser.zen/.zen
-    zen_profile_name: qk2beiy3.ansible-template
+    zen_user: willramires
+    zen_group: willramires
+    zen_home: "/home/willramires"
+    zen_root: "{{ zen_home }}/.var/app/app.zen_browser.zen/.zen"
+    zen_profile_name: "qk2beiy3.ansible-template"
     zen_profile: "{{ zen_root }}/{{ zen_profile_name }}"
     zen_install_hash: "2953CB39A2589173"
     zen_extensions:
