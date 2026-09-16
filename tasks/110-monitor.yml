@@ -1,0 +1,71 @@
+---
+- name: Configurar monitores
+  become: true
+  vars:
+    monitor_destinos:
+      - usuario: willramires
+        diretorio: /home/willramires/.config
+      - usuario: gdm
+        diretorio: /var/lib/gdm/.config
+
+    monitor_config_xml: |
+      <monitors version="2">
+        <configuration>
+          <layoutmode>logical</layoutmode>
+          <logicalmonitor>
+            <x>0</x>
+            <y>0</y>
+            <scale>1</scale>
+            <primary>yes</primary>
+            <monitor>
+              <monitorspec>
+                <connector>HDMI-1</connector>
+                <vendor>AOC</vendor>
+                <product>27G2G4</product>
+                <serial>0x00000219</serial>
+              </monitorspec>
+              <mode>
+                <width>1920</width>
+                <height>1080</height>
+                <rate>144.001</rate>
+              </mode>
+            </monitor>
+          </logicalmonitor>
+          <disabled>
+            <monitorspec>
+              <connector>eDP-1</connector>
+              <vendor>CSW</vendor>
+              <product>MNG007QX2-1</product>
+              <serial>0x00000000</serial>
+            </monitorspec>
+          </disabled>
+        </configuration>
+      </monitors>
+
+  block:
+    - name: Garantir diretorios de configuracao
+      ansible.builtin.file:
+        path: "{{ item.diretorio }}"
+        state: directory
+        owner: "{{ item.usuario }}"
+        group: "{{ item.usuario }}"
+        mode: "0700"
+      loop: "{{ monitor_destinos }}"
+
+    - name: Instalar configuracao dos monitores
+      ansible.builtin.copy:
+        dest: "{{ item.diretorio }}/monitors.xml"
+        owner: "{{ item.usuario }}"
+        group: "{{ item.usuario }}"
+        mode: "0644"
+        content: "{{ monitor_config_xml }}"
+      loop: "{{ monitor_destinos }}"
+
+    - name: Restaurar contextos SELinux
+      ansible.builtin.command:
+        argv:
+          - restorecon
+          - -F
+          - "{{ item.diretorio }}/monitors.xml"
+      loop: "{{ monitor_destinos }}"
+      changed_when: false
