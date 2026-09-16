@@ -16,3 +16,6 @@
 
     - name: GNOME
       ansible.builtin.import_tasks: tasks/030-gnome.yml
+
+    - name: Extensões GNOME
+      ansible.builtin.import_tasks: tasks/040-extensões-gnome.yml
