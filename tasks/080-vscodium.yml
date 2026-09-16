@@ -20,3 +20,33 @@
         mode: "0600"
         content: ""
         force: false
+
+    - name: Ocultar aviso de atualizacao do SDK
+      ansible.builtin.copy:
+        dest: "{{ vscodium_config_root }}/flatpak-vscodium-sdk-update-25.08"
+        owner: willramires
+        group: willramires
+        mode: "0600"
+        content: ""
+        force: false
+
+    - name: Garantir diretorio de preferencias do VSCodium
+      ansible.builtin.file:
+        path: "{{ vscodium_config_root }}/VSCodium/User"
+        state: directory
+        owner: willramires
+        group: willramires
+        mode: "0700"
+
+    - name: Ocultar avisos do Restricted Mode
+      ansible.builtin.copy:
+        dest: "{{ vscodium_config_root }}/VSCodium/User/settings.json"
+        owner: willramires
+        group: willramires
+        mode: "0600"
+        backup: true
+        content: |
+          {
+            "security.workspace.trust.banner": "never",
+            "security.workspace.trust.startupPrompt": "never"
+          }
