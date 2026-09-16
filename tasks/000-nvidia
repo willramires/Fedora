@@ -1,0 +1,7 @@
+---
+- name: Instalar NVIDIA
+  ansible.builtin.dnf:
+    name:
+      - akmod-nvidia
+      - xorg-x11-drv-nvidia-cuda
+    state: present
