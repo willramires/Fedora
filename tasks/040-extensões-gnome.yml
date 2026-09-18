@@ -1,66 +1,4 @@
----
-- name: Instalar pipx
-  ansible.builtin.dnf:
-    name: pipx
-    state: present
-
-- name: Instalar gnome-extensions-cli
-  become: true
-  become_user: willramires
-  ansible.builtin.command:
-    cmd: pipx install gnome-extensions-cli --system-site-packages
-    creates: /home/willramires/.local/bin/gext
-
-- name: Instalar extensões GNOME
-  become: true
-  become_user: willramires
-  ansible.builtin.command:
-    cmd: >
-      /home/willramires/.local/bin/gext --filesystem install
-      just-perfection-desktop@just-perfection
-      user-accent-colors@fabito02
-      sound-percentage@subashghimire.info.np
-
-- name: Instalar Gradia Capture
-  become: true
-  become_user: willramires
-  environment:
-    HOME: /home/willramires
-  ansible.builtin.shell:
-    cmd: >-
-      git clone --depth=1 https://github.com/AlexanderVanhee/gradia-capture.git /tmp/gradia-capture && cd /tmp/gradia-capture && ./build.sh -i && gnome-extensions enable gradia-integration@alexandervanhee.github.io
-
-- name: Configurar extensões GNOME
-  ansible.builtin.copy:
-    dest: /etc/dconf/db/local.d/20-extensions
-    mode: '0644'
-    content: |
-      [org/gnome/shell]
-      disable-user-extensions=false
-      enabled-extensions=['just-perfection-desktop@just-perfection', 'user-accent-colors@fabito02', 'sound-percentage@subashghimire.info.np']
-
-      [org/gnome/shell/extensions/chromaleon]
-      accent-color='#3c0c6c'
-      custom-color=true
-      recolor-apps=true
-      recolor-folders=true
-
-      [org/gnome/shell/extensions/just-perfection]
-      activities-button=false
-      dash-separator=false
-      panel=false
-      panel-in-overview=true
-      quick-settings-airplane-mode=false
-      quick-settings-backlight=false
-      quick-settings-dark-mode=false
-      quick-settings-do-not-disturb=false
-      search=false
-      show-apps-button=false
-      support-notifier-type=0
-      type-to-search=false
-      window-preview-caption=false
-
-- name: Aplicar cores da ChromaLeon e habilitar Flatpaks
+- name: Aplicar configuração da ChromaLeon
   become: true
   become_user: willramires
   ansible.builtin.shell: |
@@ -70,23 +8,51 @@
     export GSETTINGS_SCHEMA_DIR="/home/willramires/.local/share/gnome-shell/extensions/user-accent-colors@fabito02/schemas"
 
     schema="org.gnome.shell.extensions.chromaleon"
+    extensao="user-accent-colors@fabito02"
 
     flatpak override --user \
       --filesystem=xdg-config/gtk-3.0 \
       --filesystem=xdg-config/gtk-4.0
 
-    gsettings set "$schema" gnome-colors false
-    gsettings set "$schema" accent-color "'#3c0c6c'"
-    gsettings set "$schema" custom-color true
-    gsettings set "$schema" recolor-apps true
+    gnome-extensions disable "$extensao"
+    sleep 2
 
-    sleep 2
-    gsettings set "$schema" recolor-folders false
-    sleep 2
+    gsettings set "$schema" gnome-colors false
+    gsettings set "$schema" custom-color true
+    gsettings set "$schema" persistent-choices true
+    gsettings set "$schema" recolor-apps true
     gsettings set "$schema" recolor-folders true
+
+    gsettings set "$schema" accent-color "'#3c0c6d'"
+
+    python3 - <<'PY'
+    import ast
+    import json
+    import os
+    import pathlib
+    import subprocess
+
+    cache = pathlib.Path(
+        os.environ.get("XDG_CACHE_HOME", "/home/willramires/.cache")
+    ) / "chromaleon/color-cache.json"
+
+    dados = json.loads(cache.read_text()) if cache.exists() else {}
+
+    for chave in ("picture-uri", "picture-uri-dark"):
+        uri = ast.literal_eval(subprocess.check_output(
+            ["gsettings", "get", "org.gnome.desktop.background", chave],
+            text=True,
+        ).strip())
+        if uri:
+            dados.setdefault(uri, {})["persistentColor"] = "#3c0c6c"
+
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    cache.write_text(json.dumps(dados))
+    PY
+
+    gnome-extensions enable "$extensao"
+    sleep 3
+    
+    gsettings set "$schema" accent-color "'#3c0c6c'"
   args:
     executable: /bin/bash
-
-- name: Atualizar dconf
-  ansible.builtin.command:
-    cmd: dconf update
