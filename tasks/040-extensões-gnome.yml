@@ -60,6 +60,33 @@
       type-to-search=false
       window-preview-caption=false
 
+- name: Aplicar cores da ChromaLeon e habilitar Flatpaks
+  become: true
+  become_user: willramires
+  ansible.builtin.shell: |
+
+    export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+    export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+    export GSETTINGS_SCHEMA_DIR="/home/willramires/.local/share/gnome-shell/extensions/user-accent-colors@fabito02/schemas"
+
+    schema="org.gnome.shell.extensions.chromaleon"
+
+    flatpak override --user \
+      --filesystem=xdg-config/gtk-3.0 \
+      --filesystem=xdg-config/gtk-4.0
+
+    gsettings set "$schema" gnome-colors false
+    gsettings set "$schema" accent-color "'#3c0c6c'"
+    gsettings set "$schema" custom-color true
+    gsettings set "$schema" recolor-apps true
+
+    sleep 2
+    gsettings set "$schema" recolor-folders false
+    sleep 2
+    gsettings set "$schema" recolor-folders true
+  args:
+    executable: /bin/bash
+
 - name: Atualizar dconf
   ansible.builtin.command:
     cmd: dconf update
