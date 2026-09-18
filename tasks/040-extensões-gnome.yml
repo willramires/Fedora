@@ -122,3 +122,50 @@
     gsettings set "$schema" accent-color "'#3c0c6c'"
   args:
     executable: /bin/bash
+
+- name: Instalar ajuste dos ícones da ChromaLeon
+  ansible.builtin.copy:
+    dest: /usr/local/bin/chromaleon-primeiro-login
+    mode: "0755"
+    content: |
+      #!/usr/bin/bash
+      set -e
+
+      # Configuração destinada ao usuário deste playbook.
+      [ "$(id -un)" = willramires ] || exit 0
+
+      marcador="$HOME/.local/state/chromaleon-icones-v1"
+      [ -f "$marcador" ] && exit 0
+
+      export GSETTINGS_SCHEMA_DIR="$HOME/.local/share/gnome-shell/extensions/user-accent-colors@fabito02/schemas"
+      schema="org.gnome.shell.extensions.chromaleon"
+
+      # Executar somente depois de a extensão estar ativa.
+      for tentativa in {1..60}; do
+        if LC_ALL=C gnome-extensions info user-accent-colors@fabito02 \
+          2>/dev/null | grep -q 'State: ACTIVE'; then
+          gsettings set "$schema" recolor-apps false
+          sleep 2
+          gsettings set "$schema" recolor-apps true
+
+          mkdir -p "$(dirname "$marcador")"
+          touch "$marcador"
+          exit 0
+        fi
+        sleep 1
+      done
+
+      # Sem marcador: tenta novamente no próximo login.
+      exit 1
+
+- name: Executar ajuste na sessão GNOME
+  ansible.builtin.copy:
+    dest: /etc/xdg/autostart/chromaleon-primeiro-login.desktop
+    mode: "0644"
+    content: |
+      [Desktop Entry]
+      Type=Application
+      Name=Ajustar ícones da ChromaLeon
+      Exec=/usr/local/bin/chromaleon-primeiro-login
+      OnlyShowIn=GNOME;
+      NoDisplay=true
