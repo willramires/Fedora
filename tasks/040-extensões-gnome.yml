@@ -64,108 +64,87 @@
   ansible.builtin.command:
     cmd: dconf update
 
-- name: Aplicar configuração da ChromaLeon
-  become: true
-  become_user: willramires
-  ansible.builtin.shell: |
-
-    export XDG_RUNTIME_DIR="/run/user/$(id -u)"
-    export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
-    export GSETTINGS_SCHEMA_DIR="/home/willramires/.local/share/gnome-shell/extensions/user-accent-colors@fabito02/schemas"
-
-    schema="org.gnome.shell.extensions.chromaleon"
-    extensao="user-accent-colors@fabito02"
-
-    flatpak override --user \
-      --filesystem=xdg-config/gtk-3.0 \
-      --filesystem=xdg-config/gtk-4.0
-
-    gnome-extensions disable "$extensao"
-    sleep 2
-
-    gsettings set "$schema" gnome-colors false
-    gsettings set "$schema" custom-color true
-    gsettings set "$schema" persistent-choices true
-    gsettings set "$schema" recolor-apps true
-    gsettings set "$schema" recolor-folders true
-
-    gsettings set "$schema" accent-color "'#3c0c6d'"
-
-    python3 - <<'PY'
-    import ast
-    import json
-    import os
-    import pathlib
-    import subprocess
-
-    cache = pathlib.Path(
-        os.environ.get("XDG_CACHE_HOME", "/home/willramires/.cache")
-    ) / "chromaleon/color-cache.json"
-
-    dados = json.loads(cache.read_text()) if cache.exists() else {}
-
-    for chave in ("picture-uri", "picture-uri-dark"):
-        uri = ast.literal_eval(subprocess.check_output(
-            ["gsettings", "get", "org.gnome.desktop.background", chave],
-            text=True,
-        ).strip())
-        if uri:
-            dados.setdefault(uri, {})["persistentColor"] = "#3c0c6c"
-
-    cache.parent.mkdir(parents=True, exist_ok=True)
-    cache.write_text(json.dumps(dados))
-    PY
-
-    gnome-extensions enable "$extensao"
-    sleep 3
-    
-    gsettings set "$schema" accent-color "'#3c0c6c'"
-  args:
-    executable: /bin/bash
-
-- name: Instalar ajuste dos ícones da ChromaLeon
+- name: Instalar configuração da ChromaLeon para o primeiro login
   ansible.builtin.copy:
     dest: /usr/local/bin/chromaleon-primeiro-login
+    owner: root
+    group: root
     mode: "0755"
     content: |
       #!/usr/bin/bash
       set -e
 
-      # Configuração destinada ao usuário deste playbook.
       [ "$(id -un)" = willramires ] || exit 0
 
-      marcador="$HOME/.local/state/chromaleon-icones-v1"
+      marcador="$HOME/.local/state/chromaleon-configurado-v2"
       [ -f "$marcador" ] && exit 0
 
       export GSETTINGS_SCHEMA_DIR="$HOME/.local/share/gnome-shell/extensions/user-accent-colors@fabito02/schemas"
       schema="org.gnome.shell.extensions.chromaleon"
 
-      # Executar somente depois de a extensão estar ativa.
+      ativo=false
       for tentativa in {1..60}; do
         if LC_ALL=C gnome-extensions info user-accent-colors@fabito02 \
           2>/dev/null | grep -q 'State: ACTIVE'; then
-          gsettings set "$schema" recolor-apps false
-          sleep 2
-          gsettings set "$schema" recolor-apps true
-
-          mkdir -p "$(dirname "$marcador")"
-          touch "$marcador"
-          exit 0
+          ativo=true
+          break
         fi
         sleep 1
       done
+      [ "$ativo" = true ] || exit 1
 
-      # Sem marcador: tenta novamente no próximo login.
-      exit 1
+      flatpak override --user \
+        --filesystem=xdg-config/gtk-3.0 \
+        --filesystem=xdg-config/gtk-4.0
 
-- name: Executar ajuste na sessão GNOME
+      python3 - <<'PY'
+      import ast
+      import json
+      import os
+      from pathlib import Path
+      import subprocess
+
+      cache = Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
+      arquivo = cache / "chromaleon/color-cache.json"
+      dados = json.loads(arquivo.read_text()) if arquivo.exists() else {}
+
+      for chave in ("picture-uri", "picture-uri-dark"):
+          uri = ast.literal_eval(subprocess.check_output(
+              ["gsettings", "get", "org.gnome.desktop.background", chave],
+              text=True,
+          ).strip())
+          if uri:
+              dados.setdefault(uri, {})["persistentColor"] = "#3c0c6c"
+
+      arquivo.parent.mkdir(parents=True, exist_ok=True)
+      arquivo.write_text(json.dumps(dados))
+      PY
+
+      gsettings set "$schema" gnome-colors false
+      gsettings set "$schema" persistent-choices true
+      sleep 2
+      gsettings set "$schema" custom-color true
+      gsettings set "$schema" accent-color "'#3c0c6c'"
+      gsettings set "$schema" recolor-folders true
+
+      sleep 2
+      gsettings set "$schema" recolor-apps false
+      sleep 2
+      gsettings set "$schema" recolor-apps true
+
+      mkdir -p "$(dirname "$marcador")"
+      touch "$marcador"
+
+- name: Executar configuração da ChromaLeon na sessão GNOME
   ansible.builtin.copy:
     dest: /etc/xdg/autostart/chromaleon-primeiro-login.desktop
+    owner: root
+    group: root
     mode: "0644"
     content: |
       [Desktop Entry]
       Type=Application
-      Name=Ajustar ícones da ChromaLeon
+      Name=Configurar ChromaLeon
       Exec=/usr/local/bin/chromaleon-primeiro-login
       OnlyShowIn=GNOME;
       NoDisplay=true
