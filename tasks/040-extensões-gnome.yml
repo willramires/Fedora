@@ -1,7 +1,74 @@
+---
+- name: Instalar pipx
+  ansible.builtin.dnf:
+    name: pipx
+    state: present
+
+- name: Instalar gnome-extensions-cli
+  become: true
+  become_user: willramires
+  ansible.builtin.command:
+    cmd: pipx install gnome-extensions-cli --system-site-packages
+    creates: /home/willramires/.local/bin/gext
+
+- name: Instalar extensões GNOME
+  become: true
+  become_user: willramires
+  ansible.builtin.command:
+    cmd: >
+      /home/willramires/.local/bin/gext --filesystem install
+      just-perfection-desktop@just-perfection
+      user-accent-colors@fabito02
+      sound-percentage@subashghimire.info.np
+
+- name: Instalar Gradia Capture
+  become: true
+  become_user: willramires
+  environment:
+    HOME: /home/willramires
+  ansible.builtin.shell:
+    cmd: >-
+      git clone --depth=1 https://github.com/AlexanderVanhee/gradia-capture.git /tmp/gradia-capture && cd /tmp/gradia-capture && ./build.sh -i && gnome-extensions enable gradia-integration@alexandervanhee.github.io
+
+- name: Configurar extensões GNOME
+  ansible.builtin.copy:
+    dest: /etc/dconf/db/local.d/20-extensions
+    mode: '0644'
+    content: |
+      [org/gnome/shell]
+      disable-user-extensions=false
+      enabled-extensions=['just-perfection-desktop@just-perfection', 'user-accent-colors@fabito02', 'sound-percentage@subashghimire.info.np']
+
+      [org/gnome/shell/extensions/chromaleon]
+      accent-color='#3c0c6c'
+      custom-color=true
+      recolor-apps=true
+      recolor-folders=true
+
+      [org/gnome/shell/extensions/just-perfection]
+      activities-button=false
+      dash-separator=false
+      panel=false
+      panel-in-overview=true
+      quick-settings-airplane-mode=false
+      quick-settings-backlight=false
+      quick-settings-dark-mode=false
+      quick-settings-do-not-disturb=false
+      search=false
+      show-apps-button=false
+      support-notifier-type=0
+      type-to-search=false
+      window-preview-caption=false
+
+- name: Atualizar dconf
+  ansible.builtin.command:
+    cmd: dconf update
+
 - name: Aplicar configuração da ChromaLeon
   become: true
   become_user: willramires
   ansible.builtin.shell: |
+    set -e
 
     export XDG_RUNTIME_DIR="/run/user/$(id -u)"
     export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
