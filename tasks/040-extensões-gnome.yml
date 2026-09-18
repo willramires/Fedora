@@ -64,6 +64,17 @@
   ansible.builtin.command:
     cmd: dconf update
 
+- name: Permitir cores da ChromaLeon nos Flatpaks
+  become: true
+  become_user: willramires
+  ansible.builtin.command:
+    argv:
+      - flatpak
+      - override
+      - --user
+      - --filesystem=xdg-config/gtk-3.0
+      - --filesystem=xdg-config/gtk-4.0
+
 - name: Instalar configuração da ChromaLeon para o primeiro login
   ansible.builtin.copy:
     dest: /usr/local/bin/chromaleon-primeiro-login
@@ -92,10 +103,6 @@
         sleep 1
       done
       [ "$ativo" = true ] || exit 1
-
-      flatpak override --user \
-        --filesystem=xdg-config/gtk-3.0 \
-        --filesystem=xdg-config/gtk-4.0
 
       python3 - <<'PY'
       import ast
