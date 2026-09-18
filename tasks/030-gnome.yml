@@ -111,3 +111,32 @@
 - name: Atualizar banco dconf
   ansible.builtin.command:
     cmd: dconf update
+
+- name: Configurar prompt roxo
+  ansible.builtin.blockinfile:
+    path: /home/willramires/.bashrc
+    marker: "# {mark} ANSIBLE PROMPT"
+    insertafter: EOF
+    backup: true
+    block: |
+      PS1='\[\e[38;5;141m\]\u@\h\[\e[0m\]:\[\e[38;5;141m\]\w\[\e[0m\]\$ '
+
+- name: Criar diretório de favoritos
+  ansible.builtin.file:
+    path: /home/willramires/.config/gtk-3.0
+    state: directory
+    owner: willramires
+    group: willramires
+    mode: '0755'
+
+- name: Configurar favoritos do Nautilus
+  ansible.builtin.copy:
+    dest: /home/willramires/.config/gtk-3.0/bookmarks
+    owner: willramires
+    group: willramires
+    mode: '0644'
+    backup: true
+    content: |
+      file:///home/willramires/Downloads
+      file:///home/willramires/Pictures
+      file:///home/willramires/Videos
