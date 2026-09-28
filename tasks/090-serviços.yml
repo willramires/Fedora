@@ -1,0 +1,51 @@
+---
+- name: Desativar serviços em segundo plano do usuário
+  become: true
+  become_user: willramires
+  ansible.builtin.shell: |
+    mkdir -p /home/willramires/.config/autostart /home/willramires/.config/systemd/user /home/willramires/.local/share/dbus-1/services
+    ln -sf /dev/null /home/willramires/.config/systemd/user/evolution-alarm-notify.service
+    printf '[Desktop Entry]\nHidden=true\n' > /home/willramires/.config/autostart/org.gnome.Evolution-alarm-notify.desktop
+    printf '[D-BUS Service]\nName=org.gnome.OnlineAccounts\nExec=/usr/bin/false\n' > /home/willramires/.local/share/dbus-1/services/org.gnome.OnlineAccounts.service
+    printf '[D-BUS Service]\nName=org.gnome.Identity\nExec=/usr/bin/false\n' > /home/willramires/.local/share/dbus-1/services/org.gnome.Identity.service
+    printf '[D-BUS Service]\nName=org.gtk.vfs.GoaVolumeMonitor\nExec=/usr/bin/false\n' > /home/willramires/.local/share/dbus-1/services/org.gtk.vfs.GoaVolumeMonitor.service
+  args:
+    executable: /bin/bash
+
+- name: Instalar script de finalização
+  ansible.builtin.copy:
+    dest: /usr/local/sbin/fedora-config-finalize
+    mode: "0755"
+    content: |
+      #!/usr/bin/bash
+      set -e
+      /usr/bin/flatpak update --system --noninteractive -y
+      /usr/bin/nmcli radio wifi off
+      /usr/bin/rfkill block bluetooth
+      /usr/bin/tuned-adm profile throughput-performance
+      /usr/bin/systemctl disable fedora-config-finalize.service
+
+- name: Instalar serviço de finalização
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/fedora-config-finalize.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Finalizar configuração do Fedora
+      Wants=network-online.target
+      After=network-online.target NetworkManager.service akmods.service
+      Before=display-manager.service
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/sbin/fedora-config-finalize
+      TimeoutStartSec=0
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Habilitar serviço de finalização para o próximo boot
+  ansible.builtin.systemd:
+    name: fedora-config-finalize.service
+    enabled: true
+    daemon_reload: true

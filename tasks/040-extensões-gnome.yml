@@ -1,0 +1,157 @@
+---
+- name: Instalar pipx
+  ansible.builtin.dnf:
+    name: pipx
+    state: present
+
+- name: Instalar gnome-extensions-cli
+  become: true
+  become_user: willramires
+  ansible.builtin.command:
+    cmd: pipx install gnome-extensions-cli --system-site-packages
+    creates: /home/willramires/.local/bin/gext
+
+- name: Instalar extensões GNOME
+  become: true
+  become_user: willramires
+  ansible.builtin.command:
+    cmd: >
+      /home/willramires/.local/bin/gext --filesystem install
+      just-perfection-desktop@just-perfection
+      user-accent-colors@fabito02
+      sound-percentage@subashghimire.info.np
+
+- name: Instalar Gradia Capture
+  become: true
+  become_user: willramires
+  environment:
+    HOME: /home/willramires
+  ansible.builtin.shell:
+    cmd: >-
+      git clone --depth=1 https://github.com/AlexanderVanhee/gradia-capture.git /tmp/gradia-capture && cd /tmp/gradia-capture && ./build.sh -i && gnome-extensions enable gradia-integration@alexandervanhee.github.io
+
+- name: Configurar extensões GNOME
+  ansible.builtin.copy:
+    dest: /etc/dconf/db/local.d/20-extensions
+    mode: '0644'
+    content: |
+      [org/gnome/shell]
+      disable-user-extensions=false
+      enabled-extensions=['just-perfection-desktop@just-perfection', 'user-accent-colors@fabito02', 'sound-percentage@subashghimire.info.np']
+
+      [org/gnome/shell/extensions/chromaleon]
+      accent-color='#3c0c6c'
+      custom-color=true
+      recolor-apps=true
+      recolor-folders=true
+
+      [org/gnome/shell/extensions/just-perfection]
+      activities-button=false
+      dash-separator=false
+      panel=false
+      panel-in-overview=true
+      quick-settings-airplane-mode=false
+      quick-settings-backlight=false
+      quick-settings-dark-mode=false
+      quick-settings-do-not-disturb=false
+      search=false
+      show-apps-button=false
+      support-notifier-type=0
+      type-to-search=false
+      window-preview-caption=false
+
+- name: Atualizar dconf
+  ansible.builtin.command:
+    cmd: dconf update
+
+- name: Permitir cores da ChromaLeon nos Flatpaks
+  become: true
+  become_user: willramires
+  ansible.builtin.command:
+    argv:
+      - flatpak
+      - override
+      - --user
+      - --filesystem=xdg-config/gtk-3.0
+      - --filesystem=xdg-config/gtk-4.0
+
+- name: Instalar configuração da ChromaLeon para o primeiro login
+  ansible.builtin.copy:
+    dest: /usr/local/bin/chromaleon-primeiro-login
+    owner: root
+    group: root
+    mode: "0755"
+    content: |
+      #!/usr/bin/bash
+      set -e
+
+      [ "$(id -un)" = willramires ] || exit 0
+
+      marcador="$HOME/.local/state/chromaleon-configurado-v2"
+      [ -f "$marcador" ] && exit 0
+
+      export GSETTINGS_SCHEMA_DIR="$HOME/.local/share/gnome-shell/extensions/user-accent-colors@fabito02/schemas"
+      schema="org.gnome.shell.extensions.chromaleon"
+
+      ativo=false
+      for tentativa in {1..60}; do
+        if LC_ALL=C gnome-extensions info user-accent-colors@fabito02 \
+          2>/dev/null | grep -q 'State: ACTIVE'; then
+          ativo=true
+          break
+        fi
+        sleep 1
+      done
+      [ "$ativo" = true ] || exit 1
+
+      python3 - <<'PY'
+      import ast
+      import json
+      import os
+      from pathlib import Path
+      import subprocess
+
+      cache = Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
+      arquivo = cache / "chromaleon/color-cache.json"
+      dados = json.loads(arquivo.read_text()) if arquivo.exists() else {}
+
+      for chave in ("picture-uri", "picture-uri-dark"):
+          uri = ast.literal_eval(subprocess.check_output(
+              ["gsettings", "get", "org.gnome.desktop.background", chave],
+              text=True,
+          ).strip())
+          if uri:
+              dados.setdefault(uri, {})["persistentColor"] = "#3c0c6c"
+
+      arquivo.parent.mkdir(parents=True, exist_ok=True)
+      arquivo.write_text(json.dumps(dados))
+      PY
+
+      gsettings set "$schema" gnome-colors false
+      gsettings set "$schema" persistent-choices true
+      sleep 2
+      gsettings set "$schema" custom-color true
+      gsettings set "$schema" accent-color "'#3c0c6c'"
+      gsettings set "$schema" recolor-folders true
+
+      sleep 2
+      gsettings set "$schema" recolor-apps false
+      sleep 2
+      gsettings set "$schema" recolor-apps true
+
+      mkdir -p "$(dirname "$marcador")"
+      touch "$marcador"
+
+- name: Executar configuração da ChromaLeon na sessão GNOME
+  ansible.builtin.copy:
+    dest: /etc/xdg/autostart/chromaleon-primeiro-login.desktop
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Desktop Entry]
+      Type=Application
+      Name=Configurar ChromaLeon
+      Exec=/usr/local/bin/chromaleon-primeiro-login
+      OnlyShowIn=GNOME;
+      NoDisplay=true

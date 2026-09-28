@@ -1,0 +1,40 @@
+---
+- name: Configurar Prism Launcher
+  vars:
+    prism_data_root: "/home/willramires/.var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher"
+
+  block:
+    - name: Garantir diretorio de dados do Prism Launcher
+      ansible.builtin.file:
+        path: "{{ prism_data_root }}"
+        state: directory
+        owner: willramires
+        group: willramires
+        mode: "0700"
+
+    - name: Instalar configuracao inicial personalizada do Prism Launcher
+      ansible.builtin.copy:
+        dest: "{{ prism_data_root }}/prismlauncher.cfg"
+        owner: willramires
+        group: willramires
+        mode: "0600"
+        force: false
+        content: |
+          [General]
+          ApplicationTheme=dark
+          CloseAfterLaunch=true
+          ConfigVersion=1.3
+          FallbackMRBlockedMods=2
+          IconTheme=pe_colored
+          InstRenamingMode=PhysicalDir
+          JProfilerPath=
+          JvmArgs="-Dvoxy.geometryBufferSizeOverrideMB=1024"
+          Language=en_US
+          MCEditPath=
+          MainWindowGeometry=AdnQywADAAAAAAAAAAAAAAAAAx8AAAJXAAAAAAAAAAAAAAMfAAACVwAAAAAAAAAABQAAAAAAAAAAAAAAAx8AAAJX
+          MainWindowState="AAAA/wAAAAD9AAAAAAAAAyAAAAH3AAAABAAAAAQAAAAIAAAACPwAAAADAAAAAQAAAAEAAAAeAGkAbgBzAHQAYQBuAGMAZQBUAG8AbwBsAEIAYQByAgAAAAD/////AAAAAAAAAAAAAAACAAAAAQAAABYAbQBhAGkAbgBUAG8AbwBsAEIAYQByAQAAAAD/////AAAAAAAAAAAAAAADAAAAAQAAABYAbgBlAHcAcwBUAG8AbwBsAEIAYQByAQAAAAD/////AAAAAAAAAAA="
+          PagedGeometry=AdnQywADAAAAAAAf////zwAAAuwAAAKsAAAAKgAAAAAAAALhAAACoQAAAAAAAAAABQAAAAAqAAAAAAAAAuEAAAKh
+          ShowModIncompat=true
+          StatusBarVisible=true
+          UseSystemLocale=true
+          WideBarVisibility_instanceToolBar="MTExMTExMTExLEJwQlFXSXVtciswQUJYRkVhclYwUjVuVTBpWT0="
