@@ -1,0 +1,129 @@
+---
+- name: Instalar extensões GNOME
+  become_user: willramires
+  vars:
+    ext_dir: /home/willramires/.local/share/gnome-shell/extensions
+    extensoes_ego:
+      - just-perfection-desktop@just-perfection
+      - user-accent-colors@fabito02
+      - sound-percentage@subashghimire.info.np
+  block:
+    - name: Ler versão do GNOME Shell
+      ansible.builtin.command: gnome-shell --version
+      register: gnome_shell
+      changed_when: false
+
+    - name: Baixar extensões do extensions.gnome.org
+      ansible.builtin.get_url:
+        url: "https://extensions.gnome.org/download-extension/{{ item }}.shell-extension.zip?shell_version={{ gnome_shell.stdout.split() | last }}"
+        dest: "/tmp/{{ item }}.zip"
+        mode: "0644"
+        timeout: 60
+      loop: "{{ extensoes_ego }}"
+      register: download
+      until: download is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Instalar extensões do extensions.gnome.org
+      ansible.builtin.command:
+        cmd: gnome-extensions install --force /tmp/{{ item }}.zip
+        creates: "{{ ext_dir }}/{{ item }}"
+      loop: "{{ extensoes_ego }}"
+
+    - name: Baixar Gradia Capture
+      ansible.builtin.git:
+        repo: https://github.com/AlexanderVanhee/gradia-capture.git
+        dest: /tmp/gradia-capture
+        depth: 1
+      register: clone
+      until: clone is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Instalar Gradia Capture
+      ansible.builtin.command:
+        cmd: ./build.sh -i
+        chdir: /tmp/gradia-capture
+        creates: "{{ ext_dir }}/gradia-integration@alexandervanhee.github.io"
+
+    - name: Permitir cores da ChromaLeon nos Flatpaks
+      ansible.builtin.command: >-
+        flatpak override --user
+        --filesystem=xdg-config/gtk-3.0
+        --filesystem=xdg-config/gtk-4.0
+      changed_when: false
+
+    - name: Criar diretórios da ChromaLeon
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0700"
+      loop:
+        - /home/willramires/.cache/chromaleon
+        - /home/willramires/.config/autostart
+
+    - name: Fixar cor da ChromaLeon para o wallpaper
+      ansible.builtin.copy:
+        dest: /home/willramires/.cache/chromaleon/color-cache.json
+        mode: "0644"
+        content: '{"file:///usr/share/backgrounds/willramires/wallpaper.png": {"persistentColor": "#3c0c6c"}}'
+
+    - name: Gerar ícones da ChromaLeon no primeiro login
+      ansible.builtin.copy:
+        dest: /home/willramires/.config/autostart/chromaleon-icones.desktop
+        mode: "0644"
+        content: |
+          [Desktop Entry]
+          Type=Application
+          Name=Gerar ícones da ChromaLeon
+          Exec=/usr/local/bin/chromaleon-icones
+          OnlyShowIn=GNOME;
+          NoDisplay=true
+
+- name: Ativar e configurar extensões GNOME
+  notify: Atualizar dconf
+  ansible.builtin.copy:
+    dest: /etc/dconf/db/local.d/20-extensions
+    mode: "0644"
+    content: |
+      [org/gnome/shell]
+      disable-user-extensions=false
+      enabled-extensions=['just-perfection-desktop@just-perfection', 'user-accent-colors@fabito02', 'sound-percentage@subashghimire.info.np', 'gradia-integration@alexandervanhee.github.io']
+
+      [org/gnome/shell/extensions/chromaleon]
+      accent-color='#3c0c6c'
+      custom-color=true
+      recolor-apps=true
+      recolor-folders=false
+
+      [org/gnome/shell/extensions/just-perfection]
+      activities-button=false
+      dash-separator=false
+      panel=false
+      panel-in-overview=true
+      quick-settings-airplane-mode=false
+      quick-settings-backlight=false
+      quick-settings-dark-mode=false
+      quick-settings-do-not-disturb=false
+      search=false
+      show-apps-button=false
+      support-notifier-type=0
+      type-to-search=false
+      window-preview-caption=false
+
+- name: Instalar gatilho dos ícones da ChromaLeon
+  ansible.builtin.copy:
+    dest: /usr/local/bin/chromaleon-icones
+    mode: "0755"
+    content: |
+      #!/usr/bin/bash
+      for tentativa in {1..60}; do
+        LC_ALL=C gnome-extensions info user-accent-colors@fabito02 2>/dev/null \
+          | grep -q 'State: ACTIVE' && break
+        [ "$tentativa" = 60 ] && exit 1
+        sleep 1
+      done
+
+      dconf write /org/gnome/shell/extensions/chromaleon/recolor-folders true
+      rm -f "$HOME/.config/autostart/chromaleon-icones.desktop"

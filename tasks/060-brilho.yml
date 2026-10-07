@@ -1,0 +1,59 @@
+---
+- name: Instalar ddcutil
+  ansible.builtin.dnf:
+    name: ddcutil
+    state: present
+
+- name: Instalar script de brilho do monitor
+  ansible.builtin.copy:
+    dest: /usr/local/bin/fedora-config-set-monitor-brightness
+    mode: "0755"
+    content: |
+      #!/usr/bin/bash
+      set -eu
+
+      agora=$((10#$(date +%H%M)))
+
+      brilho=50
+      if (( agora < 500 || agora >= 1730 )); then
+        brilho=0
+      fi
+
+      exec /usr/bin/ddcutil --mfg AOC --model 27G2G4 setvcp 10 "$brilho"
+
+- name: Instalar serviço de brilho do monitor
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/fedora-config-brightness.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Ajustar brilho do monitor AOC conforme o horário
+
+      [Service]
+      Type=oneshot
+      ExecStartPre=/usr/sbin/modprobe i2c-dev
+      ExecStart=/usr/local/bin/fedora-config-set-monitor-brightness
+
+- name: Instalar timer de brilho do monitor
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/fedora-config-brightness.timer
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Agendar brilho do monitor para 05h e 17h30
+
+      [Timer]
+      OnBootSec=45s
+      OnCalendar=*-*-* 05:00:00
+      OnCalendar=*-*-* 17:30:00
+      Persistent=true
+      AccuracySec=1min
+
+      [Install]
+      WantedBy=timers.target
+
+- name: Habilitar timer de brilho do monitor
+  ansible.builtin.systemd_service:
+    name: fedora-config-brightness.timer
+    enabled: true
+    daemon_reload: true

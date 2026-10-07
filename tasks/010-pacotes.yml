@@ -1,0 +1,27 @@
+---
+- name: Remover pacotes indesejados
+  ansible.builtin.dnf:
+    name: [
+      libreoffice, libreoffice-calc, libreoffice-emailmerge,
+      libreoffice-graphicfilter, libreoffice-impress, libreoffice-writer,
+      libreoffice-draw, libreoffice-math, libreoffice-base,
+      libreoffice-pyuno, unoconv, firefox, mediawriter, gnome-software, malcontent-control,
+      showtime, papers, gnome-color-manager, gnome-system-monitor,
+      gnome-extensions-app, gnome-shell-extension-background-logo,
+      baobab, decibels, gnome-boxes, gnome-calculator,
+      gnome-calendar, gnome-characters, gnome-clocks,
+      gnome-connections, gnome-contacts, gnome-disk-utility,
+      gnome-font-viewer, gnome-logs, gnome-maps,
+      gnome-text-editor, gnome-tour, gnome-weather,
+      loupe, simple-scan, snapshot, yelp,
+      ibus-anthy, ibus-hangul, ibus-libpinyin,
+      ibus-m17n, ibus-typing-booster,
+      anthy-unicode, libpinyin, m17n-db, m17n-lib,
+      gnome-classic-session,
+      gnome-shell-extension-apps-menu,
+      gnome-shell-extension-launch-new-instance,
+      gnome-shell-extension-places-menu,
+      gnome-shell-extension-window-list
+    ]
+    state: absent
+    allowerasing: true
