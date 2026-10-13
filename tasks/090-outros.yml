@@ -1,0 +1,120 @@
+---
+- name: Instalar OBS, Prism Launcher, Spotify e VSCodium
+  community.general.flatpak:
+    name:
+      - com.obsproject.Studio
+      - org.prismlauncher.PrismLauncher
+      - com.spotify.Client
+      - com.vscodium.codium
+
+- name: Spotify com decoração de janela do GNOME via XWayland
+  ansible.builtin.command: flatpak override --system --nosocket=wayland --socket=x11 com.spotify.Client
+  changed_when: false
+
+- name: Configurar OBS, Prism Launcher, Spotify e VSCodium
+  become_user: willramires
+  vars:
+    app: /home/willramires/.var/app
+    obs: "{{ app }}/com.obsproject.Studio/config/obs-studio"
+    prism: "{{ app }}/org.prismlauncher.PrismLauncher/data/PrismLauncher"
+    spotify: "{{ app }}/com.spotify.Client/config/spotify/Users/315cgvok6a624lt4eelwnv6cojry-user"
+    codium: "{{ app }}/com.vscodium.codium/config"
+  block:
+    - name: Criar diretórios
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0700"
+      loop:
+        - /home/willramires/Videos
+        - "{{ obs }}/basic/profiles/Untitled"
+        - "{{ prism }}"
+        - "{{ spotify }}"
+        - "{{ codium }}/VSCodium/User"
+
+    - name: Escrever configurações
+      ansible.builtin.copy:
+        dest: "{{ item.dest }}"
+        content: "{{ item.content | default('') }}"
+        force: "{{ item.force | default(true) }}"
+        mode: "0600"
+      loop_control:
+        label: "{{ item.dest | replace(app ~ '/', '') }}"
+      loop:
+        - dest: "{{ obs }}/global.ini"
+          content: |
+            [General]
+            LastVersion=537001986
+
+        - dest: "{{ obs }}/user.ini"
+          content: |
+            [Basic]
+            Profile=Geral
+            ProfileDir=Untitled
+
+        - dest: "{{ obs }}/basic/profiles/Untitled/basic.ini"
+          content: |
+            [General]
+            Name=Geral
+
+            [Output]
+            Mode=Advanced
+
+            [AdvOut]
+            RecEncoder=obs_nvenc_h264_tex
+            RecFormat2=mkv
+            RecFileNameWithoutSpace=true
+            AudioEncoder=libfdk_aac
+            Track1Bitrate=192
+
+            [Video]
+            BaseCX=1920
+            BaseCY=1080
+            OutputCX=1920
+            OutputCY=1080
+            FPSCommon=60
+            ScaleType=lanczos
+
+        - dest: "{{ obs }}/basic/profiles/Untitled/recordEncoder.json"
+          content: '{"rate_control": "CQP", "cqp": 21, "keyint_sec": 2}'
+
+        - dest: "{{ prism }}/prismlauncher.cfg"
+          force: false
+          content: |
+            [General]
+            ApplicationTheme=dark
+            CloseAfterLaunch=true
+            ConfigVersion=1.3
+            FallbackMRBlockedMods=2
+            IconTheme=pe_colored
+            InstRenamingMode=PhysicalDir
+            JvmArgs="-Dvoxy.geometryBufferSizeOverrideMB=1024"
+            Language=en_US
+            MainWindowState="AAAA/wAAAAD9AAAAAAAAAyAAAAH3AAAABAAAAAQAAAAIAAAACPwAAAADAAAAAQAAAAEAAAAeAGkAbgBzAHQAYQBuAGMAZQBUAG8AbwBsAEIAYQByAgAAAAD/////AAAAAAAAAAAAAAACAAAAAQAAABYAbQBhAGkAbgBUAG8AbwBsAEIAYQByAQAAAAD/////AAAAAAAAAAAAAAADAAAAAQAAABYAbgBlAHcAcwBUAG8AbwBsAEIAYQByAQAAAAD/////AAAAAAAAAAA="
+            ShowModIncompat=true
+            StatusBarVisible=true
+            UseSystemLocale=true
+            WideBarVisibility_instanceToolBar="MTExMTExMTExLEJwQlFXSXVtciswQUJYRkVhclYwUjVuVTBpWT0="
+
+        - dest: "{{ spotify }}/prefs"
+          content: |
+            audio.play_bitrate_non_metered_migrated=true
+            audio.play_bitrate_non_metered_enumeration=4
+            audio.play_bitrate_enumeration=4
+            audio.sync_bitrate_enumeration=4
+            audio.allow_downgrade=false
+            audio.normalize_v2=false
+            ui.hide_hpto=true
+
+        - dest: "{{ codium }}/flatpak-vscodium-first-run"
+          force: false
+        - dest: "{{ codium }}/flatpak-vscodium-sdk-update-25.08"
+          force: false
+
+        - dest: "{{ codium }}/VSCodium/User/settings.json"
+          content: |
+            {
+              "security.workspace.trust.banner": "never",
+              "security.workspace.trust.startupPrompt": "never",
+              "workbench.startupEditor": "none"
+            }
