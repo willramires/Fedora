@@ -35,3 +35,6 @@
 
     - name: Zen
       ansible.builtin.import_tasks: tasks/080-zen.yml
+
+    - name: Outros
+      ansible.builtin.import_tasks: tasks/090-outros.yml
