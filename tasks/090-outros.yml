@@ -18,7 +18,7 @@
     mode: "0644"
     content: |
       [org/gnome/shell]
-            favorite-apps=['org.gnome.Ptyxis.desktop', 'net.nokyan.Resources.desktop', 'org.gnome.Nautilus.desktop', 'app.zen_browser.zen.desktop', 'com.spotify.Client.desktop', 'com.vscodium.codium.desktop', 'com.obsproject.Studio.desktop', 'org.prismlauncher.PrismLauncher.desktop']
+      favorite-apps=['org.gnome.Ptyxis.desktop', 'net.nokyan.Resources.desktop', 'org.gnome.Nautilus.desktop', 'app.zen_browser.zen.desktop', 'com.spotify.Client.desktop', 'com.vscodium.codium.desktop', 'com.obsproject.Studio.desktop', 'org.prismlauncher.PrismLauncher.desktop']
 
 - name: Configurar OBS, Prism Launcher, Spotify e VSCodium
   become_user: willramires
