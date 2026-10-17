@@ -18,4 +18,3 @@
     - ansible.builtin.import_tasks: tasks/060-brilho.yml
     - ansible.builtin.import_tasks: tasks/070-monitor.yml
     - ansible.builtin.import_tasks: tasks/080-zen.yml
-    - ansible.builtin.import_tasks: tasks/090-outros.yml
