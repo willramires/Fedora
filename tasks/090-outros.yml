@@ -163,7 +163,7 @@
         content: ""
         force: false
 
-    - name: Sem popup da loja antes do primeiro login
+    - name: Sem popup da loja nem aviso de amigo em jogo antes do primeiro login
       ansible.builtin.copy:
         dest: "{{ steam_userdata }}/config/localconfig.vdf"
         mode: "0600"
@@ -171,13 +171,17 @@
         content: |
           "UserLocalConfigStore"
           {
+          	"friends"
+          	{
+          		"Notifications_ShowIngame"		"0"
+          	}
           	"News"
           	{
           		"NotifyAvailableGames"		"0"
           	}
           }
 
-    - name: Abrir na Biblioteca antes do primeiro login
+    - name: Abrir na Biblioteca e sem aviso de amigo em jogo antes do primeiro login
       ansible.builtin.copy:
         dest: "{{ steam_userdata }}/7/remote/sharedconfig.vdf"
         mode: "0600"
@@ -192,6 +196,10 @@
           			"Steam"
           			{
           				"SteamDefaultDialog"		"#app_games"
+          				"FriendsUI"
+          				{
+          					"FriendsUIJSON"		"{\"bNotifications_ShowIngame\":false}"
+          				}
           			}
           		}
           	}
