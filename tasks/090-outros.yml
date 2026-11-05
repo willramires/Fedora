@@ -208,7 +208,7 @@
       loop_control:
         label: "{{ item.file }}"
 
-    - name: Adicionar "Sair da Steam" ao menu do ícone
+    - name: Abrir só a Biblioteca e adicionar "Sair da Steam" ao ícone
       ansible.builtin.copy:
         dest: "{{ home }}/.local/share/applications/com.valvesoftware.Steam.desktop"
         mode: "0644"
@@ -217,7 +217,7 @@
           Type=Application
           Name=Steam
           Icon=com.valvesoftware.Steam
-          Exec=/usr/bin/flatpak run com.valvesoftware.Steam %U
+          Exec=/usr/bin/flatpak run com.valvesoftware.Steam -silent steam://open/games %U
           Terminal=false
           Categories=Network;FileTransfer;Game;
           MimeType=x-scheme-handler/steam;x-scheme-handler/steamlink;
