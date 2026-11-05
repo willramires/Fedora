@@ -1,0 +1,210 @@
+---
+- name: Configurar Prism Launcher
+  vars:
+    prism_data_root: "/home/willramires/.var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher"
+
+  block:
+    - name: Garantir diretorio de dados do Prism Launcher
+      ansible.builtin.file:
+        path: "{{ prism_data_root }}"
+        state: directory
+        owner: willramires
+        group: willramires
+        mode: "0700"
+
+    - name: Instalar configuracao inicial personalizada do Prism Launcher
+      ansible.builtin.copy:
+        dest: "{{ prism_data_root }}/prismlauncher.cfg"
+        owner: willramires
+        group: willramires
+        mode: "0600"
+        force: false
+        content: |
+          [General]
+          ApplicationTheme=dark
+          CloseAfterLaunch=true
+          ConfigVersion=1.3
+          FallbackMRBlockedMods=2
+          IconTheme=pe_colored
+          InstRenamingMode=PhysicalDir
+          JProfilerPath=
+          JvmArgs="-Dvoxy.geometryBufferSizeOverrideMB=1024"
+          Language=en_US
+          MCEditPath=
+          MainWindowGeometry=AdnQywADAAAAAAAAAAAAAAAAAx8AAAJXAAAAAAAAAAAAAAMfAAACVwAAAAAAAAAABQAAAAAAAAAAAAAAAx8AAAJX
+          MainWindowState="AAAA/wAAAAD9AAAAAAAAAyAAAAH3AAAABAAAAAQAAAAIAAAACPwAAAADAAAAAQAAAAEAAAAeAGkAbgBzAHQAYQBuAGMAZQBUAG8AbwBsAEIAYQByAgAAAAD/////AAAAAAAAAAAAAAACAAAAAQAAABYAbQBhAGkAbgBUAG8AbwBsAEIAYQByAQAAAAD/////AAAAAAAAAAAAAAADAAAAAQAAABYAbgBlAHcAcwBUAG8AbwBsAEIAYQByAQAAAAD/////AAAAAAAAAAA="
+          PagedGeometry=AdnQywADAAAAAAAf////zwAAAuwAAAKsAAAAKgAAAAAAAALhAAACoQAAAAAAAAAABQAAAAAqAAAAAAAAAuEAAAKh
+          ShowModIncompat=true
+          StatusBarVisible=true
+          UseSystemLocale=true
+          WideBarVisibility_instanceToolBar="MTExMTExMTExLEJwQlFXSXVtciswQUJYRkVhclYwUjVuVTBpWT0="
+
+- name: Configurar Spotify
+  vars:
+    spotify_user: willramires
+    spotify_group: willramires
+    spotify_home: /home/willramires
+    spotify_account: 315cgvok6a624lt4eelwnv6cojry
+
+    spotify_config: "{{ spotify_home }}/.var/app/com.spotify.Client/config/spotify"
+    spotify_user_dir: "{{ spotify_config }}/Users/{{ spotify_account }}-user"
+    spotify_prefs: "{{ spotify_user_dir }}/prefs"
+
+  block:
+    - name: Usar decoração de janela do GNOME via XWayland
+      ansible.builtin.command:
+        argv:
+          - flatpak
+          - override
+          - --system
+          - --nosocket=wayland
+          - --socket=x11
+          - com.spotify.Client
+      changed_when: false
+
+    - name: Criar diretório de configuração da conta Spotify
+      ansible.builtin.file:
+        path: "{{ spotify_user_dir }}"
+        state: directory
+        owner: "{{ spotify_user }}"
+        group: "{{ spotify_group }}"
+        mode: "0700"
+
+    - name: Configurar preferências do Spotify antes do primeiro login
+      ansible.builtin.copy:
+        dest: "{{ spotify_prefs }}"
+        owner: "{{ spotify_user }}"
+        group: "{{ spotify_group }}"
+        mode: "0600"
+        content: |
+          audio.play_bitrate_non_metered_migrated=true
+          audio.play_bitrate_non_metered_enumeration=4
+          audio.play_bitrate_enumeration=4
+          audio.sync_bitrate_enumeration=4
+          audio.allow_downgrade=false
+          audio.normalize_v2=false
+          ui.hide_hpto=true
+
+- name: Configurar VSCodium
+  vars:
+    vscodium_config_root: "/home/willramires/.var/app/com.vscodium.codium/config"
+
+  block:
+    - name: Garantir diretorio de configuracao do VSCodium
+      ansible.builtin.file:
+        path: "{{ vscodium_config_root }}"
+        state: directory
+        owner: willramires
+        group: willramires
+        mode: "0700"
+
+    - name: Marcar README inicial do wrapper Flatpak como concluido
+      ansible.builtin.copy:
+        dest: "{{ vscodium_config_root }}/flatpak-vscodium-first-run"
+        owner: willramires
+        group: willramires
+        mode: "0600"
+        content: ""
+        force: false
+
+    - name: Ocultar aviso de atualizacao do SDK
+      ansible.builtin.copy:
+        dest: "{{ vscodium_config_root }}/flatpak-vscodium-sdk-update-25.08"
+        owner: willramires
+        group: willramires
+        mode: "0600"
+        content: ""
+        force: false
+
+    - name: Garantir diretorio de preferencias do VSCodium
+      ansible.builtin.file:
+        path: "{{ vscodium_config_root }}/VSCodium/User"
+        state: directory
+        owner: willramires
+        group: willramires
+        mode: "0700"
+
+    - name: Ocultar avisos do Restricted Mode
+      ansible.builtin.copy:
+        dest: "{{ vscodium_config_root }}/VSCodium/User/settings.json"
+        owner: willramires
+        group: willramires
+        mode: "0600"
+        backup: true
+        content: |
+          {
+            "security.workspace.trust.banner": "never",
+            "security.workspace.trust.startupPrompt": "never",
+            "workbench.startupEditor": "none"
+          }
+
+- name: Configurar Steam
+  become_user: "{{ usuario }}"
+  vars:
+    steam_account: "000000000"
+    steam_userdata: "{{ home }}/.var/app/com.valvesoftware.Steam/.local/share/Steam/userdata/{{ steam_account }}"
+
+  block:
+    - name: Criar diretórios de configuração da conta Steam
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0700"
+      loop:
+        - "{{ steam_userdata }}/config"
+        - "{{ steam_userdata }}/7/remote"
+
+    - name: Sem chat de amigos e sem popup da loja antes do primeiro login
+      ansible.builtin.copy:
+        dest: "{{ steam_userdata }}/config/localconfig.vdf"
+        mode: "0600"
+        force: false
+        content: |
+          "UserLocalConfigStore"
+          {
+          	"friends"
+          	{
+          		"SignIntoFriends"		"0"
+          	}
+          	"News"
+          	{
+          		"NotifyAvailableGames"		"0"
+          	}
+          }
+
+    - name: Abrir na Biblioteca antes do primeiro login
+      ansible.builtin.copy:
+        dest: "{{ steam_userdata }}/7/remote/sharedconfig.vdf"
+        mode: "0600"
+        force: false
+        content: |
+          "UserRoamingConfigStore"
+          {
+          	"Software"
+          	{
+          		"Valve"
+          		{
+          			"Steam"
+          			{
+          				"SteamDefaultDialog"		"#app_games"
+          				"FriendsUI"
+          				{
+          					"FriendsUIJSON"		"{\"bSignIntoFriends\":false}"
+          				}
+          			}
+          		}
+          	}
+          }
+
+    - name: Ajustar configuração já existente da Steam
+      ansible.builtin.replace:
+        path: "{{ steam_userdata }}/{{ item.file }}"
+        regexp: "{{ item.regexp }}"
+        replace: "{{ item.replace }}"
+      loop:
+        - { file: config/localconfig.vdf, regexp: '("SignIntoFriends"\s+)"1"', replace: '\1"0"' }
+        - { file: config/localconfig.vdf, regexp: '("NotifyAvailableGames"\s+)"1"', replace: '\1"0"' }
+        - { file: 7/remote/sharedconfig.vdf, regexp: '("SteamDefaultDialog"\s+)"[^"]*"', replace: '\1"#app_games"' }
+        - { file: 7/remote/sharedconfig.vdf, regexp: 'bSignIntoFriends\\":true', replace: 'bSignIntoFriends\\":false' }
+      loop_control:
+        label: "{{ item.file }}"
