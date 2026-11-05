@@ -71,7 +71,7 @@
 
       [org/gnome/shell]
       always-show-log-out=true
-      favorite-apps=['org.gnome.Nautilus.desktop', 'net.nokyan.Resources.desktop', 'org.gnome.Ptyxis.desktop', 'app.zen_browser.zen.desktop', 'com.spotify.Client.desktop', 'com.vscodium.codium.desktop', 'com.obsproject.Studio.desktop', 'org.prismlauncher.PrismLauncher.desktop', 'com.valvesoftware.Steam.desktop']
+      favorite-apps=['org.gnome.Ptyxis.desktop', 'net.nokyan.Resources.desktop', 'org.gnome.Nautilus.desktop', 'app.zen_browser.zen.desktop', 'com.spotify.Client.desktop', 'com.vscodium.codium.desktop', 'com.obsproject.Studio.desktop', 'org.prismlauncher.PrismLauncher.desktop', 'com.valvesoftware.Steam.desktop']
 
       [org/gnome/nautilus/preferences]
       default-folder-viewer='list-view'
