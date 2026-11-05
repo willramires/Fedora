@@ -153,8 +153,17 @@
       loop:
         - "{{ steam_userdata }}/config"
         - "{{ steam_userdata }}/7/remote"
+        - "{{ home }}/.local/share/applications"
+        - "{{ home }}/.var/app/com.valvesoftware.Steam/data/steam-wrapper/messages"
 
-    - name: Sem chat de amigos e sem popup da loja antes do primeiro login
+    - name: Marcar aviso de controles (steam-devices) como já visto
+      ansible.builtin.copy:
+        dest: "{{ home }}/.var/app/com.valvesoftware.Steam/data/steam-wrapper/messages/no-input-dev-perms"
+        mode: "0600"
+        content: ""
+        force: false
+
+    - name: Sem popup da loja antes do primeiro login
       ansible.builtin.copy:
         dest: "{{ steam_userdata }}/config/localconfig.vdf"
         mode: "0600"
@@ -162,10 +171,6 @@
         content: |
           "UserLocalConfigStore"
           {
-          	"friends"
-          	{
-          		"SignIntoFriends"		"0"
-          	}
           	"News"
           	{
           		"NotifyAvailableGames"		"0"
@@ -187,10 +192,6 @@
           			"Steam"
           			{
           				"SteamDefaultDialog"		"#app_games"
-          				"FriendsUI"
-          				{
-          					"FriendsUIJSON"		"{\"bSignIntoFriends\":false}"
-          				}
           			}
           		}
           	}
@@ -202,9 +203,28 @@
         regexp: "{{ item.regexp }}"
         replace: "{{ item.replace }}"
       loop:
-        - { file: config/localconfig.vdf, regexp: '("SignIntoFriends"\s+)"1"', replace: '\1"0"' }
         - { file: config/localconfig.vdf, regexp: '("NotifyAvailableGames"\s+)"1"', replace: '\1"0"' }
         - { file: 7/remote/sharedconfig.vdf, regexp: '("SteamDefaultDialog"\s+)"[^"]*"', replace: '\1"#app_games"' }
-        - { file: 7/remote/sharedconfig.vdf, regexp: 'bSignIntoFriends\\":true', replace: 'bSignIntoFriends\\":false' }
       loop_control:
         label: "{{ item.file }}"
+
+    - name: Adicionar "Sair da Steam" ao menu do ícone
+      ansible.builtin.copy:
+        dest: "{{ home }}/.local/share/applications/com.valvesoftware.Steam.desktop"
+        mode: "0644"
+        content: |
+          [Desktop Entry]
+          Type=Application
+          Name=Steam
+          Icon=com.valvesoftware.Steam
+          Exec=/usr/bin/flatpak run com.valvesoftware.Steam %U
+          Terminal=false
+          Categories=Network;FileTransfer;Game;
+          MimeType=x-scheme-handler/steam;x-scheme-handler/steamlink;
+          StartupWMClass=steam
+          PrefersNonDefaultGPU=true
+          Actions=Sair;
+
+          [Desktop Action Sair]
+          Name=Sair da Steam
+          Exec=/usr/bin/flatpak run com.valvesoftware.Steam -shutdown
