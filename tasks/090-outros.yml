@@ -141,7 +141,7 @@
 - name: Configurar Steam
   become_user: "{{ usuario }}"
   vars:
-    steam_account: "000000000"
+    steam_account: "1245253870"
     steam_userdata: "{{ home }}/.var/app/com.valvesoftware.Steam/.local/share/Steam/userdata/{{ steam_account }}"
 
   block:
@@ -205,6 +205,8 @@
       loop:
         - { file: config/localconfig.vdf, regexp: '("NotifyAvailableGames"\s+)"1"', replace: '\1"0"' }
         - { file: 7/remote/sharedconfig.vdf, regexp: '("SteamDefaultDialog"\s+)"[^"]*"', replace: '\1"#app_games"' }
+        - { file: config/localconfig.vdf, regexp: '("Notifications_ShowIngame"\s+)"1"', replace: '\1"0"' }
+        - { file: 7/remote/sharedconfig.vdf, regexp: '(ShowIngame\\?"\s*:\s*)true', replace: '\1false' }
       loop_control:
         label: "{{ item.file }}"
 
