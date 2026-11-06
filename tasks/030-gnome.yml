@@ -64,6 +64,7 @@
       night-light-temperature=uint32 1000
 
       [org/gnome/settings-daemon/plugins/power]
+      power-button-action='shutdown'
       sleep-inactive-ac-timeout=0
       sleep-inactive-ac-type='nothing'
       sleep-inactive-battery-timeout=0
