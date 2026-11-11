@@ -10,7 +10,7 @@
     spotify_dir: "{{ home }}/.var/app/com.spotify.Client/config/spotify/Users/315cgvok6a624lt4eelwnv6cojry-user"
     vscodium_dir: "{{ home }}/.var/app/com.vscodium.codium/config"
     obs_dir: "{{ home }}/.var/app/com.obsproject.Studio/config/obs-studio"
-    steam_dir: "{{ home }}/.var/app/com.valvesoftware.Steam/.local/share/Steam/userdata/000000000"
+    steam_dir: "{{ home }}/.var/app/com.valvesoftware.Steam/.local/share/Steam/userdata/1245253870"
 
   block:
     - name: Criar diretórios de configuração dos aplicativos
@@ -252,7 +252,7 @@
             "bf": 2
           }
 
-    - name: Sem chat de amigos e sem popup da loja antes do primeiro login
+    - name: Sem overlay, chat nem avisos de amigos e sem popup da loja antes do primeiro login
       ansible.builtin.copy:
         dest: "{{ steam_dir }}/config/localconfig.vdf"
         mode: "0600"
@@ -263,14 +263,22 @@
           	"friends"
           	{
           		"SignIntoFriends"		"0"
+          		"Notifications_ShowIngame"		"0"
+          		"Sounds_PlayIngame"		"0"
+          		"Notifications_ShowOnline"		"0"
+          		"Sounds_PlayOnline"		"0"
           	}
           	"News"
           	{
           		"NotifyAvailableGames"		"0"
           	}
+          	"system"
+          	{
+          		"EnableGameOverlay"		"0"
+          	}
           }
 
-    - name: Abrir na Biblioteca antes do primeiro login
+    - name: Abrir na Biblioteca, relógio 24h e sem avisos de amigos antes do primeiro login
       ansible.builtin.copy:
         dest: "{{ steam_dir }}/7/remote/sharedconfig.vdf"
         mode: "0600"
@@ -287,7 +295,7 @@
           				"SteamDefaultDialog"		"#app_games"
           				"FriendsUI"
           				{
-          					"FriendsUIJSON"		"{\"bSignIntoFriends\":false}"
+          					"FriendsUIJSON"		"{\"bSignIntoFriends\":false,\"bNotifications_ShowIngame\":false,\"bSounds_PlayIngame\":false,\"bNotifications_ShowOnline\":false,\"bSounds_PlayOnline\":false,\"b24HourClock\":true}"
           				}
           			}
           		}
@@ -300,9 +308,17 @@
         regexp: "{{ item.regexp }}"
         replace: "{{ item.replace }}"
       loop:
-        - { file: config/localconfig.vdf, regexp: '("SignIntoFriends"\s+)"1"', replace: '\1"0"' }
-        - { file: config/localconfig.vdf, regexp: '("NotifyAvailableGames"\s+)"1"', replace: '\1"0"' }
-        - { file: 7/remote/sharedconfig.vdf, regexp: '("SteamDefaultDialog"\s+)"[^"]*"', replace: '\1"#app_games"' }
-        - { file: 7/remote/sharedconfig.vdf, regexp: 'bSignIntoFriends\\":true', replace: 'bSignIntoFriends\\":false' }
+        - file: config/localconfig.vdf
+          regexp: '("(?:SignIntoFriends|NotifyAvailableGames|EnableGameOverlay|(?:Notifications_Show|Sounds_Play)(?:Ingame|Online))"\s+)"1"'
+          replace: '\1"0"'
+        - file: 7/remote/sharedconfig.vdf
+          regexp: '("SteamDefaultDialog"\s+)"[^"]*"'
+          replace: '\1"#app_games"'
+        - file: 7/remote/sharedconfig.vdf
+          regexp: '((?:bSignIntoFriends|b(?:Notifications_Show|Sounds_Play)(?:Ingame|Online))\\":)true'
+          replace: '\1false'
+        - file: 7/remote/sharedconfig.vdf
+          regexp: '(b24HourClock\\":)false'
+          replace: '\1true'
       loop_control:
         label: "{{ item.file }}"
