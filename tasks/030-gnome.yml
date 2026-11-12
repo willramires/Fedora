@@ -64,10 +64,10 @@
       night-light-temperature=uint32 1000
 
       [org/gnome/settings-daemon/plugins/power]
-      sleep-inactive-ac-timeout=3600
-      sleep-inactive-ac-type='suspend'
-      sleep-inactive-battery-timeout=3600
-      sleep-inactive-battery-type='suspend'
+      sleep-inactive-ac-timeout=0
+      sleep-inactive-ac-type='nothing'
+      sleep-inactive-battery-timeout=0
+      sleep-inactive-battery-type='nothing'
 
       [org/gnome/shell]
       always-show-log-out=true
