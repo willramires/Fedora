@@ -7,7 +7,6 @@
     zen_perfis:
       - { dir: qk2beiy3.ansible-template, cor: "#3c0c6c" }
       - { dir: tom.ansible-template, cor: "#0b259a" }
-      - { dir: outros.ansible-template, cor: "#0f6b2f" }
     zen_application_ini: /var/lib/flatpak/app/app.zen_browser.zen/current/active/files/zen/application.ini
     zen_extensions:
       - filename: "78272b6fa58f4a1abaac99321d503a20@proton.me.xpi"
