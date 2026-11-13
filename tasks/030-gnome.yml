@@ -74,11 +74,18 @@
       favorite-apps=['org.gnome.Nautilus.desktop', 'app.zen_browser.zen.desktop', 'net.nokyan.Resources.desktop']
 
       [org/gnome/nautilus/preferences]
-      default-folder-viewer='list-view'
+      default-folder-viewer='icon-view'
       default-sort-order='mtime'
       default-sort-in-reverse-order=true
       date-time-format='detailed'
       show-hidden-files=true
+
+      [org/gnome/nautilus/icon-view]
+      default-zoom-level='extra-large'
+      captions=['date_modified', 'size', 'none']
+
+      [org/gnome/nautilus/window-state]
+      maximized=true
 
       [org/gnome/nautilus/list-view]
       default-zoom-level='standard'
@@ -90,6 +97,20 @@
 
       [org/gtk/gtk4/settings/file-chooser]
       show-hidden=true
+
+- name: Criar diretório de travas do dconf
+  ansible.builtin.file:
+    path: /etc/dconf/db/local.d/locks
+    state: directory
+    mode: "0755"
+
+- name: Sempre abrir o Nautilus maximizado
+  notify: Atualizar dconf
+  ansible.builtin.copy:
+    dest: /etc/dconf/db/local.d/locks/nautilus
+    mode: "0644"
+    content: |
+      /org/gnome/nautilus/window-state/maximized
 
 - name: Criar diretório de configuração do logind
   ansible.builtin.file:
