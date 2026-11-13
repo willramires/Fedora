@@ -86,7 +86,7 @@
       captions=['date_modified', 'size', 'none']
 
       [org/gnome/nautilus/window-state]
-      initial-size=(1280, 800)
+      initial-size=(1600, 1000)
       maximized=false
 
       [org/gnome/nautilus/list-view]
@@ -106,7 +106,7 @@
     state: directory
     mode: "0755"
 
-- name: Sempre abrir o Nautilus em janela de 1280x800
+- name: Sempre abrir o Nautilus em janela de 1600x1000
   notify: Atualizar dconf
   ansible.builtin.copy:
     dest: /etc/dconf/db/local.d/locks/nautilus
