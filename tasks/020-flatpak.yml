@@ -10,8 +10,3 @@
       - com.mattjakeman.ExtensionManager
       - net.nokyan.Resources
       - app.zen_browser.zen
-      - org.prismlauncher.PrismLauncher
-      - com.obsproject.Studio
-      - com.vscodium.codium
-      - com.spotify.Client
-      - com.valvesoftware.Steam
