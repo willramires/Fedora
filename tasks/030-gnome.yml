@@ -51,6 +51,7 @@
       num-workspaces=1
 
       [org/gnome/mutter]
+      center-new-windows=true
       dynamic-workspaces=false
 
       [org/gnome/settings-daemon/plugins/housekeeping]
@@ -85,7 +86,8 @@
       captions=['date_modified', 'size', 'none']
 
       [org/gnome/nautilus/window-state]
-      maximized=true
+      initial-size=(1280, 800)
+      maximized=false
 
       [org/gnome/nautilus/list-view]
       default-zoom-level='standard'
@@ -104,12 +106,13 @@
     state: directory
     mode: "0755"
 
-- name: Sempre abrir o Nautilus maximizado
+- name: Sempre abrir o Nautilus em janela de 1280x800
   notify: Atualizar dconf
   ansible.builtin.copy:
     dest: /etc/dconf/db/local.d/locks/nautilus
     mode: "0644"
     content: |
+      /org/gnome/nautilus/window-state/initial-size
       /org/gnome/nautilus/window-state/maximized
 
 - name: Criar diretório de configuração do logind
