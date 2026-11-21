@@ -1,0 +1,191 @@
+---
+- name: Instalar gresource e glib-compile-resources
+  ansible.builtin.dnf:
+    name:
+      - /usr/bin/gresource
+      - /usr/bin/glib-compile-resources
+    state: present
+
+- name: Instalar script e serviço que deixam o tema do GNOME Shell roxo
+  ansible.builtin.copy:
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode | default('0644') }}"
+    content: "{{ item.content }}"
+  loop_control:
+    label: "{{ item.dest | basename }}"
+  loop:
+    - dest: /usr/local/bin/roxo-painel
+      mode: "0755"
+      content: |
+        #!/usr/bin/bash
+        set -e
+        tema=/usr/share/gnome-shell/gnome-shell-theme.gresource
+        gresource extract "$tema" /org/gnome/shell/theme/gnome-shell-dark.css \
+          | grep -q -- -st-accent-color || exit 0
+
+        tmp=$(mktemp -d)
+        trap 'rm -rf "$tmp"' EXIT
+        echo '<gresources><gresource prefix="/">' > "$tmp/tema.xml"
+        for recurso in $(gresource list "$tema"); do
+          mkdir -p "$tmp${recurso%/*}"
+          gresource extract "$tema" "$recurso" > "$tmp$recurso"
+          echo "<file>${recurso#/}</file>" >> "$tmp/tema.xml"
+        done
+        echo '</gresource></gresources>' >> "$tmp/tema.xml"
+
+        sed -i 's/-st-accent-color/{{ cor_roxo }}/g' "$tmp"/org/gnome/shell/theme/gnome-shell-*.css
+        glib-compile-resources --sourcedir="$tmp" --target="$tmp/tema.gresource" "$tmp/tema.xml"
+        install -Z -m 0644 "$tmp/tema.gresource" "$tema"
+
+    - dest: /etc/systemd/system/roxo-painel.service
+      content: |
+        [Unit]
+        Description=Deixar o tema do GNOME Shell roxo
+        Before=display-manager.service
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/bin/roxo-painel
+
+        [Install]
+        WantedBy=graphical.target
+
+- name: Deixar o tema do GNOME Shell roxo a cada boot
+  ansible.builtin.systemd_service:
+    name: roxo-painel.service
+    enabled: true
+    daemon_reload: true
+
+- name: Deixar o tema do GNOME Shell roxo agora
+  ansible.builtin.command: /usr/local/bin/roxo-painel
+
+- name: Instalar script que gera os ícones roxos
+  ansible.builtin.copy:
+    dest: /usr/local/bin/roxo-icones
+    mode: "0755"
+    content: |
+      #!/usr/bin/python3
+      import colorsys
+      import os
+      import re
+      import shutil
+
+      cor = "{{ cor_roxo }}".lstrip("#")
+      destino = os.path.expanduser("~/.local/share/icons/Adwaita-roxo")
+      h, l, s = colorsys.rgb_to_hls(*(int(cor[i:i + 2], 16) / 255 for i in (0, 2, 4)))
+
+
+      def tom(dl, ds):
+          rgb = colorsys.hls_to_rgb(h, min(1, max(0, l + dl)), min(1, max(0, s + ds)))
+          return "".join(f"{int(x * 255 + 0.5):02x}" for x in rgb)
+
+
+      def tons(ajustes):
+          return {azul: tom(*a) for azul, a in ajustes.items()}
+
+
+      ADWAITA = tons({
+          "3f8ae5": (-0.08, 0), "438de6": (0, 0), "62a0ea": (0.096, 0.035),
+          "a4caee": (0.25, 0.12), "afd4ff": (0.3, 0.1), "c0d5ea": (0.28, -0.2),
+          "3584e4": (0, 0), "1a5fb4": (-0.17, 0), "1c71d8": (-0.084, 0.075),
+          "99c1f1": (0.222, 0.05), "c3e5e7": (0.15, 0.05), "14498a": (-0.2, -0.05),
+          "1e77e1": (-0.08, 0), "1966c2": (-0.16, -0.02), "d7e8fc": (0.35, 0.015),
+          "b3d3f9": (0.27, 0.08), "cc9c54": (-0.08, 0), "d5ae73": (0.08, 0),
+          "cc920a": (-0.17, 0), "ce9508": (-0.17, 0), "ce9708": (-0.17, 0),
+          "98c1f1": (0.23, 0), "d3e3f9": (0.365, 0.02), "4a86cf": (0, 0),
+      })
+      VERDES = tons({
+          "1c774d": (-0.16, -0.05), "1d7a4e": (-0.16, -0.05), "208757": (-0.08, 0),
+          "208a5a": (-0.08, 0), "26a269": (0, 0), "28ab6f": (0, 0),
+          "2ec27e": (0.085, 0.055), "33d17a": (0.15, 0.05), "48d493": (0.222, 0.05),
+      })
+      APPS = {
+          "org.gnome.Nautilus.svg": ADWAITA,
+          "org.gnome.TextEditor.svg": ADWAITA,
+          "org.gnome.Logs.svg": ADWAITA,
+          "org.gnome.tweaks.svg": ADWAITA,
+          "ca.desrt.dconf-editor.svg": ADWAITA,
+          "org.gnome.Extensions.svg": VERDES,
+          "org.gnome.Shell.Extensions.svg": VERDES,
+          "org.gnome.Calculator.svg": tons({"ff7800": (0, 0), "c64600": (-0.14, -0.02)}),
+          "org.gnome.Calendar.svg": tons({
+              "9141ac": (0, 0), "af60ef": (0.15, 0.05), "874ab4": (0.15, 0.05),
+              "613583": (-0.08, 0), "3b214e": (-0.16, -0.05)}),
+          "org.gnome.Contacts.svg": tons({
+              "3584e4": (0, 0), "2864b0": (-0.08, 0), "1d60b5": (-0.16, -0.05)}),
+          "org.gnome.Geary.svg": tons({
+              "f6d32d": (0.02, 0.02), "f5c211": (-0.06, 0), "e5a50a": (-0.13, 0),
+              "c18b08": (-0.22, -0.05), "cc920a": (-0.17, 0), "ce9508": (-0.17, 0),
+              "ce9708": (-0.17, 0)}),
+          "com.mattjakeman.ExtensionManager.svg": tons({
+              "0055d4": (0, 0), "003380": (-0.18, 0.05), "55ddff": (0.26, 0.12),
+              "80b3ff": (0.12, 0.05), "0066ff": (0.03, 0)}),
+          "org.gnome.font-viewer.svg": tons({
+              "c061cb": (0, 0), "a347ba": (-0.08, 0), "813d9c": (-0.16, -0.05)}),
+          "page.tesk.Refine.svg": tons({
+              "3584e4": (0, 0), "1c71d8": (-0.084, 0.075), "62a0ea": (0.096, 0.035),
+              "99c1f1": (0.222, 0.05)}),
+      }
+      ONDE_ESTAO_OS_APPS = [
+          os.path.expanduser("~/.local/share/icons/hicolor/scalable/apps"),
+          os.path.expanduser("~/.local/share/flatpak/exports/share/icons/hicolor/scalable/apps"),
+          "/var/lib/flatpak/exports/share/icons/hicolor/scalable/apps",
+          "/usr/share/icons/hicolor/scalable/apps",
+      ]
+
+
+      def recolorir(arquivo, mapa):
+          with open(arquivo, encoding="utf-8") as f:
+              svg = f.read()
+          for azul, novo in mapa.items():
+              svg = re.sub("#" + azul, "#" + novo, svg, flags=re.I)
+          with open(arquivo, "w", encoding="utf-8") as f:
+              f.write(svg)
+
+
+      shutil.rmtree(destino, ignore_errors=True)
+      for pasta in ("places", "status", "mimetypes"):
+          shutil.copytree(f"/usr/share/icons/Adwaita/scalable/{pasta}",
+                          f"{destino}/scalable/{pasta}", symlinks=True)
+          for raiz, _, arquivos in os.walk(f"{destino}/scalable/{pasta}"):
+              for nome in arquivos:
+                  if nome.endswith(".svg") and not os.path.islink(os.path.join(raiz, nome)):
+                      recolorir(os.path.join(raiz, nome), ADWAITA)
+
+      os.makedirs(f"{destino}/scalable/apps")
+      for app, mapa in APPS.items():
+          origem = next((f"{d}/{app}" for d in ONDE_ESTAO_OS_APPS if os.path.isfile(f"{d}/{app}")), None)
+          if origem:
+              shutil.copyfile(origem, f"{destino}/scalable/apps/{app}")
+              recolorir(f"{destino}/scalable/apps/{app}", mapa)
+
+      with open(f"{destino}/index.theme", "w") as f:
+          f.write("[Icon Theme]\nName=Adwaita-roxo\nInherits=Adwaita,AdwaitaLegacy,hicolor\n"
+                  "Directories=scalable/places,scalable/status,scalable/mimetypes,scalable/apps\n")
+          for pasta, contexto in (("places", "Places"), ("status", "Status"),
+                                  ("mimetypes", "MimeTypes"), ("apps", "Applications")):
+              f.write(f"\n[scalable/{pasta}]\nContext={contexto}\nSize=128\nMinSize=8\nMaxSize=512\nType=Scalable\n")
+
+- name: Deixar o sistema roxo
+  become_user: "{{ usuario }}"
+  block:
+    - name: Destaque roxo nos apps GTK
+      ansible.builtin.copy:
+        dest: "{{ home }}/.config/{{ item }}/gtk.css"
+        mode: "0644"
+        content: |
+          @define-color accent_bg_color {{ cor_roxo }};
+      loop:
+        - gtk-3.0
+        - gtk-4.0
+
+    - name: Deixar os Flatpaks lerem o gtk.css
+      ansible.builtin.copy:
+        dest: "{{ home }}/.local/share/flatpak/overrides/global"
+        mode: "0644"
+        content: |
+          [Context]
+          filesystems=xdg-config/gtk-3.0:ro;xdg-config/gtk-4.0:ro;
+
+    - name: Gerar ícones roxos
+      ansible.builtin.command: /usr/local/bin/roxo-icones

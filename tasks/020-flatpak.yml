@@ -1,0 +1,12 @@
+---
+- name: Repositório Flatpak
+  community.general.flatpak_remote:
+    name: flathub
+    flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+
+- name: Instalação dos Flatpak
+  community.general.flatpak:
+    name:
+      - com.mattjakeman.ExtensionManager
+      - net.nokyan.Resources
+      - app.zen_browser.zen

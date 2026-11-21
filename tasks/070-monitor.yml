@@ -1,0 +1,38 @@
+---
+- name: Configurar monitores
+  ansible.builtin.copy:
+    dest: /etc/xdg/monitors.xml
+    mode: "0644"
+    content: |
+      <monitors version="2">
+        <configuration>
+          <layoutmode>logical</layoutmode>
+          <logicalmonitor>
+            <x>0</x>
+            <y>0</y>
+            <scale>1</scale>
+            <primary>yes</primary>
+            <monitor>
+              <monitorspec>
+                <connector>HDMI-1</connector>
+                <vendor>AOC</vendor>
+                <product>27G2G4</product>
+                <serial>0x00000219</serial>
+              </monitorspec>
+              <mode>
+                <width>1920</width>
+                <height>1080</height>
+                <rate>144.001</rate>
+              </mode>
+            </monitor>
+          </logicalmonitor>
+          <disabled>
+            <monitorspec>
+              <connector>eDP-1</connector>
+              <vendor>CSW</vendor>
+              <product>MNG007QX2-1</product>
+              <serial>0x00000000</serial>
+            </monitorspec>
+          </disabled>
+        </configuration>
+      </monitors>
