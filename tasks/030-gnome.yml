@@ -73,7 +73,7 @@
 
       [org/gnome/shell]
       always-show-log-out=true
-      favorite-apps=['app.zen_browser.zen.desktop']
+      favorite-apps=['org.gnome.Nautilus.desktop', 'app.zen_browser.zen.desktop', 'net.nokyan.Resources.desktop']
 
       [org/gnome/desktop/app-folders]
       folder-children=['Outros', 'Utilitarios']
