@@ -48,6 +48,12 @@
         chdir: "{{ cache_dir }}/gradia-capture"
       when: clone is changed
 
+    - name: Deixar o destaque do Gradia Capture roxo
+      ansible.builtin.replace:
+        path: "{{ home }}/.local/share/gnome-shell/extensions/gradia-integration@alexandervanhee.github.io/stylesheet.css"
+        regexp: -st-accent-color
+        replace: "{{ cor_roxo }}"
+
 - name: Ativar e configurar extensões GNOME
   notify: Atualizar dconf
   ansible.builtin.copy:
