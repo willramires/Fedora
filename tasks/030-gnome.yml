@@ -73,7 +73,22 @@
 
       [org/gnome/shell]
       always-show-log-out=true
-      favorite-apps=['org.gnome.Nautilus.desktop', 'app.zen_browser.zen.desktop', 'net.nokyan.Resources.desktop']
+      favorite-apps=['app.zen_browser.zen.desktop']
+
+      [org/gnome/desktop/app-folders]
+      folder-children=['Outros', 'Utilitarios']
+
+      [org/gnome/desktop/app-folders/folders/Outros]
+      name='Outros'
+      translate=false
+      apps=['org.prismlauncher.PrismLauncher.desktop', 'com.obsproject.Studio.desktop', 'com.vscodium.codium.desktop', 'com.spotify.Client.desktop', 'com.valvesoftware.Steam.desktop']
+
+      [org/gnome/desktop/app-folders/folders/Utilitarios]
+      name='Utilitários'
+      translate=false
+      apps=['org.gnome.Nautilus.desktop', 'org.gnome.Ptyxis.desktop', 'org.gnome.Settings.desktop', 'net.nokyan.Resources.desktop', 'com.mattjakeman.ExtensionManager.desktop']
+      categories=['AudioVideo', 'Audio', 'Video', 'Development', 'Education', 'Game', 'Graphics', 'Network', 'Office', 'Science', 'Settings', 'System', 'Utility', 'X-GNOME-Utilities']
+      excluded-apps=['app.zen_browser.zen.desktop', 'org.prismlauncher.PrismLauncher.desktop', 'com.obsproject.Studio.desktop', 'com.vscodium.codium.desktop', 'com.spotify.Client.desktop', 'com.valvesoftware.Steam.desktop']
 
       [org/gnome/nautilus/preferences]
       default-folder-viewer='icon-view'
