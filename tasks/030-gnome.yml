@@ -87,8 +87,6 @@
       name='Utilitários'
       translate=false
       apps=['org.gnome.Nautilus.desktop', 'org.gnome.Ptyxis.desktop', 'org.gnome.Settings.desktop', 'net.nokyan.Resources.desktop', 'com.mattjakeman.ExtensionManager.desktop']
-      categories=['AudioVideo', 'Audio', 'Video', 'Development', 'Education', 'Game', 'Graphics', 'Network', 'Office', 'Science', 'Settings', 'System', 'Utility', 'X-GNOME-Utilities']
-      excluded-apps=['app.zen_browser.zen.desktop', 'org.prismlauncher.PrismLauncher.desktop', 'com.obsproject.Studio.desktop', 'com.vscodium.codium.desktop', 'com.spotify.Client.desktop', 'com.valvesoftware.Steam.desktop']
 
       [org/gnome/nautilus/preferences]
       default-folder-viewer='icon-view'
